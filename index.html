@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>XPAISTraffic ShipDB Community Merger</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#e8edf5;background:#0b1220}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 15% 0%,#172a43,transparent 42%),#0b1220;min-height:100vh}
+main{max-width:1100px;margin:auto;padding:36px 20px}
+h1{font-size:clamp(2rem,5vw,3rem);margin:8px 0}h1 span{color:#7dd3fc}
+.muted{color:#9fb0c6;line-height:1.6}
+.panel{background:#111b2c;border:1px solid #2c3a50;border-radius:14px;padding:20px;margin:18px 0}
+.eyebrow{color:#7dd3fc;text-transform:uppercase;letter-spacing:.15em;font-size:.75rem;font-weight:700}
+button{background:#1a2b42;border:1px solid #3c506c;color:#eef7ff;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+button.primary{background:#0284c7;border-color:#0ea5e9}
+button:disabled{opacity:.45;cursor:not-allowed}
+input[type=file]{display:block;margin-top:12px;max-width:100%}
+input[type=password]{flex:1;min-width:220px;background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:8px;padding:10px}
+.status{padding:12px;background:#0b1728;border-radius:8px;white-space:pre-wrap;line-height:1.5;margin-top:12px}
+.ok{color:#bbf7d0}.err{color:#fecaca}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:#0b1728;padding:14px;border:1px solid #26364d;border-radius:9px}
+.stat b{display:block;font-size:1.5rem}.stat span{font-size:.8rem;color:#9fb0c6}
+.tablewrap{overflow:auto;max-height:420px;margin-top:14px}
+table{border-collapse:collapse;width:100%;font-size:.82rem;white-space:nowrap}
+td,th{text-align:left;padding:9px;border-bottom:1px solid #2b3a50}th{position:sticky;top:0;background:#17253a}
+.actions,.apirow{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
+.pill{font-size:.7rem;padding:3px 7px;border-radius:20px}.new{background:#064e3b;color:#a7f3d0}.changed{background:#713f12;color:#fde68a}.same{background:#243449;color:#cbd5e1}
+.options{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0}.options label{font-size:.9rem}
+.small{font-size:.8rem;color:#9fb0c6}.skipped{background:#351a20;border:1px solid #6b2934;color:#fecaca}
+.adminitem{border:1px solid #2b3a50;border-radius:8px;padding:12px;margin:10px 0;background:#0b1728}
+.adminitem select{background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:6px;padding:8px}
+.adminmeta{color:#9fb0c6;font-size:.8rem;line-height:1.5;margin:6px 0}
+code{color:#bae6fd}
+@media(max-width:650px){main{padding:20px 12px}.stats{grid-template-columns:repeat(2,1fr)}.panel{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">XPAISTraffic · Community contribution</div>
+<h1>ShipDB <span>Merger</span></h1>
+<p class="muted">Compare your personal ShipDB against the central repository database. Download an updated personal copy and a separate contribution file for review. Only the generated contribution CSV is uploaded if you choose to submit it; your full personal database is not uploaded.</p>
+
+<section class="panel">
+<h2>1. Central database</h2>
+<p class="muted">The central <code>ship_db.csv</code> is stored in a private Cloudflare R2 bucket and is retrieved only after the CSV access password is verified.</p>
+<div class="apirow"><input id="csvPassword" type="password" autocomplete="off" placeholder="CSV access password (not saved)" aria-label="CSV access password"><button id="loadCentralBtn" class="primary">Load central database</button></div>
+<div id="centralStatus" class="status">Enter the CSV access password to load the central database.</div>
+<h2 style="margin-top:22px">2. Your database</h2>
+<p class="muted">Select your local <code>ship_db.csv</code>. It is read locally in your browser.</p>
+<input id="userFile" type="file" accept=".csv,text/csv">
+<div class="options">
+<label><input id="fillBlanks" type="checkbox" checked> Fill missing values in either database where safe</label>
+<label><input id="replaceCentral" type="checkbox"> Include conflicting non-empty values in contribution for manual review</label>
+</div>
+<div class="actions">
+<button id="compareBtn" class="primary" disabled>Compare with central DB</button>
+<button id="resetBtn">Reset</button>
+</div>
+<div id="status" class="status">Waiting for the central database and your CSV.</div>
+</section>
+
+<section class="panel" id="results" hidden>
+<h2>3. Comparison results</h2>
+<p class="muted">New MMSIs and missing values are detected separately. The merged personal CSV includes both databases' rows. The contribution CSV contains only information absent from the central DB; conflicting values are excluded unless you explicitly include them for review.</p>
+<div class="stats">
+<div class="stat"><b id="centralCount">0</b><span>Central rows</span></div>
+<div class="stat"><b id="userCount">0</b><span>Your rows</span></div>
+<div class="stat"><b id="newCount">0</b><span>New MMSIs from you</span></div>
+<div class="stat"><b id="fillCount">0</b><span>Missing central fields</span></div>
+<div class="stat"><b id="eligibleCount">0</b><span>Valid contribution records</span></div>
+<div class="stat"><b id="skippedCount">0</b><span>Skipped: invalid/incomplete</span></div>
+</div>
+<div class="options"><label><input id="hideSame" type="checkbox" checked> Hide unchanged rows</label></div>
+<div class="tablewrap">
+<table><thead><tr><th>MMSI</th><th>Finding</th><th>ship_type</th><th>length_m</th><th>beam_m</th><th>last_seen_utc</th></tr></thead><tbody id="tbody"></tbody></table>
+</div>
+<p id="tableHint" class="small"></p>
+<div class="actions">
+<button class="primary" id="downloadMerged">Download merged personal ship_db.csv</button>
+<button id="downloadContribution">Download contribution for review</button>
+</div>
+<div class="apirow">
+<button class="primary" id="uploadContribution">Upload contribution for review</button>
+<span class="small">Uploads only the generated contribution CSV to the private review queue.</span>
+</div>
+<div id="uploadStatus" class="status">Upload is optional. Compare first, then upload your contribution for review.</div>
+<div id="exportStatus" class="status">Review the comparison before exporting.</div>
+<h3>Skipped contribution records</h3>
+<p class="muted">Only records with a valid 9-digit MMSI, AIS Type, LOA and BEAM can be included in the contribution CSV. Skipped records remain visible here with the reason and are not exported.</p>
+<div class="tablewrap">
+<table><thead><tr><th>MMSI</th><th>Reason skipped</th><th>AIS Type</th><th>LOA</th><th>BEAM</th></tr></thead><tbody id="skippedBody"></tbody></table>
+</div>
+<p id="skippedHint" class="small"></p>
+<p class="small">Contributions are submitted to a separate review queue. They do not change the published central database. Do not upload your full personal database.</p>
+</section>
+
+<section class="panel">
+<h2>4. Contribution review (admin)</h2>
+<p class="muted">For the repository maintainer only. Enter the Cloudflare admin token to list, download and update submitted contributions. The token is used for requests from this page and is not saved by this app.</p>
+<div class="apirow">
+<input id="adminToken" type="password" autocomplete="off" placeholder="ADMIN_TOKEN (not saved)">
+<button class="primary" id="loadAdmin">Load contributions</button>
+</div>
+<div id="adminStatus" class="status">Admin access has not been requested.</div>
+<div id="adminList"></div>
+<hr style="border:0;border-top:1px solid #2c3a50;margin:22px 0">
+<h3>5. Prepare weekly ShipDB update</h3>
+<p class="muted">Builds a local publication candidate using only contributions with status <code>Accepted</code>. Contributions marked <code>Published</code> are excluded because they should already be in the central database. This step does not write to GitHub.</p>
+<div class="options">
+<label><input id="replaceConflicts" type="checkbox"> Replace conflicting non-empty values after manual review</label>
+</div>
+<div class="actions">
+<button class="primary" id="preparePublication">Prepare accepted contributions</button>
+<button id="downloadCandidate" disabled>Download candidate ship_db.csv</button>
+</div>
+<div id="publicationStatus" class="status">No publication candidate has been prepared.</div>
+<h4>Conflicting values found</h4>
+<p class="muted">By default, existing non-empty central values are preserved. The list below shows differing proposed values from accepted contributions.</p>
+<div class="tablewrap">
+<table><thead><tr><th>Contribution</th><th>MMSI</th><th>Field</th><th>Current value</th><th>Proposed value</th><th>Action</th></tr></thead><tbody id="publicationConflictBody"></tbody></table>
+</div>
+<p id="publicationConflictHint" class="small"></p>
+</section>
+<footer class="small">CSV comparison runs in your browser. Uploads are stored separately in a private review queue. The central ship_db.csv is not modified automatically.</footer>
+</main>
+
+<script>
+'use strict';
+const API_BASE='https://xpais-shipdb-api.ignobilis-4370.workers.dev';
+const $=id=>document.getElementById(id);
+const FIELDS=['mmsi','ship_type','length_m','beam_m','last_seen_utc'];
+let centralRows=[],userRows=[],centralComments=[],centralHeaders=FIELDS,results=[],centralReady=false,skippedContributions=[];let publicationCandidateRows=null,publicationComments=[],publicationConflicts=[];
+
+function parseRecords(text){
+  const records=[];let row=[],field='',quoted=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(quoted){
+      if(c==='"'&&text[i+1]==='"'){field+='"';i++}
+      else if(c==='"')quoted=false;
+      else field+=c;
+    }else if(c==='"'&&field==='')quoted=true;
+    else if(c===','){row.push(field);field=''}
+    else if(c==='\n'||c==='\r'){
+      if(c==='\r'&&text[i+1]==='\n')i++;
+      row.push(field);records.push(row);row=[];field='';
+    }else field+=c;
+  }
+  if(quoted)throw Error('CSV contains an unclosed quotation mark.');
+  if(field!==''||row.length){row.push(field);records.push(row)}
+  return records;
+}
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,'');
+  let lines=text.split(/\r?\n/).filter(x=>x.trim()!=='');
+  const comments=[];
+  while(lines.length&&lines[0].trim().startsWith('#'))comments.push(lines.shift());
+  if(!lines.length)throw Error('No CSV header row found.');
+  const rec=parseRecords(lines.join('\n'));
+  const headers=rec.shift().map(x=>x.trim().toLowerCase());
+  if(!headers.includes('mmsi'))throw Error('Required column "mmsi" is missing.');
+  if(new Set(headers).size!==headers.length)throw Error('CSV contains duplicate column names.');
+  const rows=[],seen=new Set();
+  for(let i=0;i<rec.length;i++){
+    if(rec[i].every(v=>!v.trim()))continue;
+    if(rec[i].length!==headers.length)throw Error('CSV row '+(i+2)+' has '+rec[i].length+' columns; expected '+headers.length+'.');
+    const r={};
+    FIELDS.forEach(f=>r[f]=headers.includes(f)?(rec[i][headers.indexOf(f)]||'').trim():'');
+    if(!r.mmsi)throw Error('Row '+(i+2)+' has no MMSI.');
+    if(seen.has(r.mmsi))throw Error('Duplicate MMSI '+r.mmsi+' found.');
+    seen.add(r.mmsi);rows.push(r);
+  }
+  return{rows,comments,headers};
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function quote(v){v=String(v??'');return /[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function makeCSV(rows,comments=[]){
+  // The Worker expects the CSV header as the first line; comments are omitted on upload.
+  const out=[FIELDS.join(',')];
+  for(const r of rows)out.push(FIELDS.map(f=>quote(r[f])).join(','));
+  return '\uFEFF'+out.join('\r\n')+'\r\n';
+}
+async function loadCentral(){
+  const button=$('loadCentralBtn');
+  const password=$('csvPassword').value.trim();
+  if(!password){
+    $('centralStatus').className='status err';
+    $('centralStatus').textContent='Enter the CSV access password first.';
+    return;
+  }
+  button.disabled=true;
+  centralReady=false;
+  $('compareBtn').disabled=true;
+  $('centralStatus').className='status';
+  $('centralStatus').textContent='Authenticating and loading the central database…';
+  try{
+    const response=await fetch(API_BASE+'/api/central-db',{
+      method:'GET',
+      headers:{Authorization:'Bearer '+password},
+      cache:'no-store'
+    });
+    if(!response.ok){
+      let detail='';
+      try{const data=await response.json();detail=data.error||'';}catch{}
+      if(response.status===401)throw Error('Access denied. Check the CSV access password.');
+      throw Error((detail||'HTTP '+response.status));
+    }
+    const parsed=parseCSV(await response.text());
+    centralRows=parsed.rows;
+    centralComments=parsed.comments;
+    centralHeaders=parsed.headers;
+    centralReady=true;
+    $('centralStatus').className='status ok';
+    $('centralStatus').textContent='Authenticated. Central database loaded: '+centralRows.length.toLocaleString()+' records.';
+    $('compareBtn').disabled=!$('userFile').files.length;
+  }catch(e){
+    centralRows=[];centralComments=[];centralHeaders=FIELDS;centralReady=false;
+    $('centralStatus').className='status err';
+    $('centralStatus').textContent='Could not load central CSV: '+e.message;
+  }finally{
+    button.disabled=false;
+  }
+}
+$('loadCentralBtn').addEventListener('click',loadCentral);
+$('csvPassword').addEventListener('keydown',event=>{if(event.key==='Enter')loadCentral();});
+$('userFile').addEventListener('change',()=>{
+  $('compareBtn').disabled=!(centralReady&&$('userFile').files.length);
+  $('status').textContent=$('userFile').files.length?'Local file selected: '+$('userFile').files[0].name:'Please select a CSV file.';
+});
+function validShipData(row){
+  const reasons=[];
+  const mmsi=String(row.mmsi??'').trim();
+  const type=String(row.ship_type??'').trim();
+  const loa=String(row.length_m??'').trim();
+  const beam=String(row.beam_m??'').trim();
+  if(!/^\d{9}$/.test(mmsi))reasons.push('Missing or invalid MMSI (must be 9 digits)');
+  if(!type||!/^\d+$/.test(type)||Number(type)<1||Number(type)>99)reasons.push('Missing or invalid AIS Type');
+  if(!loa||!Number.isFinite(Number(loa))||Number(loa)<=0)reasons.push('Missing or invalid LOA (length_m)');
+  if(!beam||!Number.isFinite(Number(beam))||Number(beam)<=0)reasons.push('Missing or invalid BEAM (beam_m)');
+  return reasons;
+}
+function compareRows(){
+  const cMap=new Map(centralRows.map(r=>[r.mmsi,{...r}]));
+  const uMap=new Map(userRows.map(r=>[r.mmsi,{...r}]));
+  const all=new Map();centralRows.forEach(r=>all.set(r.mmsi,{...r}));
+  let newCount=0,fillCount=0;
+  const candidates=new Map();skippedContributions=[];results=[];
+  for(const u of userRows){
+    const c=cMap.get(u.mmsi);
+    if(!c){
+      newCount++;all.set(u.mmsi,{...u});candidates.set(u.mmsi,{...u,reason:'NEW MMSI'});
+      results.push({mmsi:u.mmsi,status:'NEW MMSI',base:null,user:u,contribution:true});continue;
+    }
+    const diffs=[],missing=[];
+    for(const f of FIELDS.slice(1)){
+      if(!c[f]&&u[f]){missing.push(f);fillCount++}
+      else if(c[f]&&u[f]&&c[f]!==u[f])diffs.push(f);
+    }
+    const merged=all.get(u.mmsi);
+    if($('fillBlanks').checked)for(const f of FIELDS.slice(1))if(!merged[f]&&u[f])merged[f]=u[f];
+    if(missing.length||(diffs.length&&$('replaceCentral').checked)){
+      const candidate={...merged};
+      if(diffs.length&&$('replaceCentral').checked)for(const f of diffs)candidate[f]=u[f];
+      candidates.set(u.mmsi,{...candidate,reason:missing.length?'FILL MISSING FIELDS':'CONFLICT FOR REVIEW'});
+    }
+    results.push({mmsi:u.mmsi,status:diffs.length?'CONFLICT':missing.length?'CAN FILL':'MATCH',base:c,user:u,diffs,missing,contribution:candidates.has(u.mmsi)});
+  }
+  for(const c of centralRows)if(!uMap.has(c.mmsi))results.push({mmsi:c.mmsi,status:'CENTRAL ONLY',base:c,user:null,contribution:false});
+  const validContributions=[];
+  for(const [mmsi,row] of candidates){
+    const reasons=validShipData(row);
+    if(reasons.length)skippedContributions.push({mmsi,row,reasons,reason:row.reason||'NEW MMSI'});
+    else validContributions.push(Object.fromEntries(FIELDS.map(f=>[f,row[f]??''])));
+  }
+  window.mergedRows=[...all.values()];window.contributionRows=validContributions;
+  $('centralCount').textContent=centralRows.length.toLocaleString();
+  $('userCount').textContent=userRows.length.toLocaleString();
+  $('newCount').textContent=newCount.toLocaleString();
+  $('fillCount').textContent=fillCount.toLocaleString();
+  $('eligibleCount').textContent=validContributions.length.toLocaleString();
+  $('skippedCount').textContent=skippedContributions.length.toLocaleString();
+  $('results').hidden=false;render();renderSkipped();
+  $('status').className='status ok';
+  $('status').textContent='Comparison complete. Contributions are exported only when AIS Type, LOA, and BEAM are valid. No files were uploaded and the repository was not changed.';
+  $('exportStatus').textContent='Ready to export. Incomplete or invalid records will be excluded from the contribution.';
+}
+function renderSkipped(){
+  $('skippedBody').innerHTML=skippedContributions.map(x=>'<tr><td>'+esc(x.mmsi)+'</td><td>'+esc(x.reasons.join('; '))+'</td><td>'+esc(x.row.ship_type||'—')+'</td><td>'+esc(x.row.length_m||'—')+'</td><td>'+esc(x.row.beam_m||'—')+'</td></tr>').join('');
+  $('skippedHint').textContent=skippedContributions.length?skippedContributions.length.toLocaleString()+' records skipped. They will not be included in ship_db_contribution.csv.':'No records were skipped for missing or invalid AIS Type, LOA, or BEAM.';
+}
+function render(){
+  const list=results.filter(r=>!$('hideSame').checked||r.status!=='MATCH');
+  $('tbody').innerHTML=list.map(r=>{
+    const val=f=>{const c=r.base?.[f]||'',u=r.user?.[f]||'';return c&&u&&c!==u?esc(c)+' → <strong>'+esc(u)+'</strong>':esc(u||c||'—')};
+    const cls=r.status==='NEW MMSI'?'new':r.status==='CONFLICT'?'changed':'same';
+    return '<tr><td>'+esc(r.mmsi)+'</td><td><span class="pill '+cls+'">'+esc(r.status)+'</span>'+(r.diffs?.length?'<div class="small">Conflicts: '+esc(r.diffs.join(', '))+'</div>':'')+'</td>'+FIELDS.slice(1).map(f=>'<td>'+val(f)+'</td>').join('')+'</tr>';
+  }).join('');
+  $('tableHint').textContent='Showing '+list.length.toLocaleString()+' of '+results.length.toLocaleString()+'. This website does not directly modify the central database.';
+}
+function download(name,rows,comments){
+  const out=[...(comments.length?comments:['# XPAISTraffic ShipDB - generated by community merger']),FIELDS.join(',')];
+  for(const r of rows)out.push(FIELDS.map(f=>quote(r[f])).join(','));
+  const blob=new Blob(['\uFEFF'+out.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$('compareBtn').addEventListener('click',async()=>{
+  try{const file=$('userFile').files[0];if(!file)throw Error('Please select your CSV first.');userRows=parseCSV(await file.text()).rows;compareRows();}
+  catch(e){$('status').className='status err';$('status').textContent=e.message;}
+});
+$('hideSame').addEventListener('change',render);
+$('fillBlanks').addEventListener('change',()=>{});
+$('replaceCentral').addEventListener('change',()=>{});
+$('downloadMerged').addEventListener('click',()=>{download('ship_db_merged.csv',window.mergedRows,centralComments);$('exportStatus').textContent='The merged personal CSV has been created.'});
+$('downloadContribution').addEventListener('click',()=>{
+  if(!window.contributionRows?.length){$('exportStatus').textContent='No valid records are available to contribute. If records were detected, they may be incomplete; see the skipped-records list.';return;}
+  download('ship_db_contribution.csv',window.contributionRows,[]);
+  $('exportStatus').textContent=window.contributionRows.length+' valid MMSI records exported. '+skippedContributions.length+' incomplete or invalid records were excluded.';
+});
+$('uploadContribution').addEventListener('click',async()=>{
+  const rows=window.contributionRows||[];
+  if(!rows.length){$('uploadStatus').className='status err';$('uploadStatus').textContent='No valid contribution records are available. Review the comparison and skipped records first.';return;}
+  const button=$('uploadContribution');button.disabled=true;$('uploadStatus').className='status';$('uploadStatus').textContent='Uploading '+rows.length+' records…';
+  try{
+    const response=await fetch(API_BASE+'/api/contributions',{method:'POST',headers:{'Content-Type':'text/csv'},body:makeCSV(rows)});
+    const data=await response.json();if(!response.ok)throw Error(data.error||('HTTP '+response.status));
+    $('uploadStatus').className='status ok';
+    $('uploadStatus').textContent='Upload successful. Contribution ID: '+data.id+'\nStatus: '+data.status+'\nRecords: '+data.rowCount+'\nThe contribution is awaiting review and has not changed the central database.';
+  }catch(e){$('uploadStatus').className='status err';$('uploadStatus').textContent='Upload failed: '+e.message+'\nCheck your connection and try again. The central database was not changed.';}
+  finally{button.disabled=false;}
+});
+function adminHeaders(){return{Authorization:'Bearer '+$('adminToken').value.trim()};}
+async function loadAdmin(){
+  if(!$('adminToken').value.trim()){$('adminStatus').className='status err';$('adminStatus').textContent='Enter the admin token first.';return;}
+  const button=$('loadAdmin');button.disabled=true;$('adminStatus').className='status';$('adminStatus').textContent='Loading contributions…';$('adminList').replaceChildren();
+  try{
+    const response=await fetch(API_BASE+'/api/admin/contributions',{headers:adminHeaders(),cache:'no-store'});
+    const data=await response.json();if(!response.ok)throw Error(data.error||('HTTP '+response.status));
+    const items=data.contributions||[];$('adminStatus').className='status ok';$('adminStatus').textContent='Loaded '+items.length+' contribution(s).';
+    if(!items.length){$('adminList').textContent='No contributions submitted yet.';return;}
+    const list=$('adminList');
+    for(const item of items){
+      const card=document.createElement('div');card.className='adminitem';
+      const title=document.createElement('strong');title.textContent='Contribution '+item.id;card.appendChild(title);
+      const meta=document.createElement('div');meta.className='adminmeta';
+      meta.textContent='Submitted: '+(item.submittedAt||'unknown')+' · Rows: '+(item.rowCount??'unknown')+' · Updated: '+(item.updatedAt||'unknown');card.appendChild(meta);
+      const controls=document.createElement('div');controls.className='apirow';
+      const select=document.createElement('select');
+      for(const status of ['Pending','In Review','Accepted','Rejected','Published']){const option=document.createElement('option');option.value=status;option.textContent=status;select.appendChild(option);}
+      select.value=item.status||'Pending';controls.appendChild(select);
+      const save=document.createElement('button');save.textContent='Save status';
+      save.addEventListener('click',async()=>{
+        save.disabled=true;
+        try{
+          const r=await fetch(API_BASE+'/api/admin/contributions/'+encodeURIComponent(item.id)+'/status',{method:'POST',headers:{...adminHeaders(),'Content-Type':'application/json'},body:JSON.stringify({status:select.value})});
+          const d=await r.json();if(!r.ok)throw Error(d.error||('HTTP '+r.status));
+          meta.textContent='Submitted: '+(d.contribution.submittedAt||'unknown')+' · Rows: '+(d.contribution.rowCount??'unknown')+' · Updated: '+(d.contribution.updatedAt||'unknown')+' · Status: '+d.contribution.status;
+          save.textContent='Saved';
+        }catch(e){$('adminStatus').className='status err';$('adminStatus').textContent='Could not update status: '+e.message;}
+        finally{save.disabled=false;}
+      });controls.appendChild(save);
+      const dl=document.createElement('button');dl.textContent='Download CSV';
+      dl.addEventListener('click',async()=>{
+        dl.disabled=true;
+        try{
+          const r=await fetch(API_BASE+'/api/admin/contributions/'+encodeURIComponent(item.id),{headers:adminHeaders()});
+          if(!r.ok){let d={};try{d=await r.json();}catch{}throw Error(d.error||('HTTP '+r.status));}
+          const blob=await r.blob(),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='contribution-'+item.id+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);
+        }catch(e){$('adminStatus').className='status err';$('adminStatus').textContent='Could not download contribution: '+e.message;}
+        finally{dl.disabled=false;}
+      });controls.appendChild(dl);card.appendChild(controls);list.appendChild(card);
+    }
+  }catch(e){$('adminStatus').className='status err';$('adminStatus').textContent='Admin request failed: '+e.message;$('adminList').replaceChildren();}
+  finally{button.disabled=false;}
+}
+$('loadAdmin').addEventListener('click',loadAdmin);
+$('resetBtn').addEventListener('click',()=>{
+  $('userFile').value='';$('results').hidden=true;$('status').className='status';$('status').textContent='Waiting for the central database and your CSV.';
+  $('compareBtn').disabled=true;userRows=[];results=[];window.mergedRows=[];window.contributionRows=[];
+});
+
+function sameFieldValue(field,a,b){
+  const x=String(a??'').trim(),y=String(b??'').trim();
+  if(x===y)return true;
+  if(!x||!y)return false;
+  if(['ship_type','length_m','beam_m'].includes(field)){
+    const nx=Number(x),ny=Number(y);
+    return Number.isFinite(nx)&&Number.isFinite(ny)&&nx===ny;
+  }
+  return false;
+}
+async function preparePublication(){
+  const button=$('preparePublication'),downloadButton=$('downloadCandidate');
+  button.disabled=true;downloadButton.disabled=true;publicationCandidateRows=null;publicationConflicts=[];
+  $('publicationConflictBody').replaceChildren();$('publicationConflictHint').textContent='';
+  $('publicationStatus').className='status';$('publicationStatus').textContent='Loading contribution list and retrieving Accepted CSVs…';
+  try{
+    if(!$('adminToken').value.trim())throw Error('Enter the admin token in the admin section first.');
+    if(!centralReady)throw Error('The central database has not loaded successfully yet.');
+    const listResponse=await fetch(API_BASE+'/api/admin/contributions',{headers:adminHeaders(),cache:'no-store'});
+    const listData=await listResponse.json();
+    if(!listResponse.ok)throw Error(listData.error||('HTTP '+listResponse.status));
+    const accepted=(listData.contributions||[]).filter(x=>x.status==='Accepted');
+    if(!accepted.length)throw Error('No contributions have status Accepted. Review contributions and set approved ones to Accepted before preparing a publication candidate.');
+    const merged=new Map(centralRows.map(row=>[row.mmsi,{...row}]));
+    const originalKeys=new Set(merged.keys());
+    const counts={acceptedContributions:accepted.length,processedRows:0,addedMMSIs:0,filledFields:0,updatedLastSeen:0,conflicts:0,replacedConflicts:0};
+    const conflicts=[];
+    for(const item of accepted){
+      const response=await fetch(API_BASE+'/api/admin/contributions/'+encodeURIComponent(item.id),{headers:adminHeaders(),cache:'no-store'});
+      if(!response.ok){
+        let data={};try{data=await response.json()}catch{}
+        throw Error('Could not download contribution '+item.id+': '+(data.error||('HTTP '+response.status)));
+      }
+      const parsed=parseCSV(await response.text());
+      if(!parsed.rows.length)throw Error('Contribution '+item.id+' has no data rows.');
+      for(const incoming of parsed.rows){
+        const reasons=validShipData(incoming);
+        if(reasons.length)throw Error('Contribution '+item.id+' contains an invalid row for MMSI '+(incoming.mmsi||'(empty)')+': '+reasons.join('; ')+'. No candidate was generated.');
+        counts.processedRows++;
+        const existing=merged.get(incoming.mmsi);
+        if(!existing){
+          merged.set(incoming.mmsi,Object.fromEntries(FIELDS.map(f=>[f,String(incoming[f]??'').trim()])));
+          counts.addedMMSIs++;
+          continue;
+        }
+        for(const field of FIELDS.slice(1)){
+          const current=String(existing[field]??'').trim();
+          const proposed=String(incoming[field]??'').trim();
+          if(!proposed)continue;
+          if(!current){
+            existing[field]=proposed;
+            if(field==='last_seen_utc')counts.updatedLastSeen++;
+            else counts.filledFields++;
+            continue;
+          }
+          if(sameFieldValue(field,current,proposed))continue;
+          if(field==='last_seen_utc'){
+            // Dates in this DB use sortable UTC date/time strings. Never move last_seen backwards.
+            if(proposed>current){existing[field]=proposed;counts.updatedLastSeen++;}
+            continue;
+          }
+          counts.conflicts++;
+          const replace=$('replaceConflicts').checked;
+          conflicts.push({id:item.id,mmsi:incoming.mmsi,field,current,proposed,action:replace?'Replaced after manual approval':'Kept existing value'});
+          if(replace){existing[field]=proposed;counts.replacedConflicts++;}
+        }
+      }
+    }
+    publicationCandidateRows=[...merged.values()];
+    publicationComments=centralComments.length?centralComments:['# XPAISTraffic ShipDB - candidate generated by community contribution merger'];
+    publicationConflicts=conflicts;
+    $('publicationConflictBody').innerHTML=conflicts.slice(0,500).map(x=>'<tr><td>'+esc(x.id)+'</td><td>'+esc(x.mmsi)+'</td><td>'+esc(x.field)+'</td><td>'+esc(x.current)+'</td><td>'+esc(x.proposed)+'</td><td>'+esc(x.action)+'</td></tr>').join('');
+    $('publicationConflictHint').textContent=conflicts.length?(conflicts.length.toLocaleString()+' conflicting field values shown; '+Math.max(0,conflicts.length-500).toLocaleString()+' additional conflicts are omitted from this on-page list.'): 'No conflicting non-empty ship_type, length_m or beam_m values were found.';
+    $('publicationStatus').className='status ok';
+    $('publicationStatus').textContent=
+      'Candidate prepared (not published). Accepted contributions: '+counts.acceptedContributions+
+      '\nRows examined: '+counts.processedRows+
+      '\nNew MMSIs added: '+counts.addedMMSIs+
+      '\nMissing fields filled: '+counts.filledFields+
+      '\nlast_seen_utc advanced: '+counts.updatedLastSeen+
+      '\nConflicting fields found: '+counts.conflicts+
+      '\nConflicting fields replaced: '+counts.replacedConflicts+
+      '\nFinal candidate rows: '+publicationCandidateRows.length+
+      '\nReview the conflicts below, then download the candidate. Upload/commit to GitHub remains a separate manual step.';
+    downloadButton.disabled=false;
+  }catch(e){
+    publicationCandidateRows=null;
+    $('publicationStatus').className='status err';
+    $('publicationStatus').textContent='Could not prepare publication candidate: '+e.message;
+  }finally{button.disabled=false;}
+}
+$('preparePublication').addEventListener('click',preparePublication);
+$('downloadCandidate').addEventListener('click',()=>{
+  if(!publicationCandidateRows){$('publicationStatus').className='status err';$('publicationStatus').textContent='Prepare a candidate first.';return;}
+  download('ship_db.csv',publicationCandidateRows,publicationComments);
+  $('publicationStatus').className='status ok';
+  $('publicationStatus').textContent+='\nCandidate CSV downloaded. After verifying and committing it as the central ship_db.csv, change the included contributions from Accepted to Published.';
+});
+
+</script>
+</body>
+</html>
