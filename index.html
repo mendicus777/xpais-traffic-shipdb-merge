@@ -30,6 +30,7 @@ td,th{text-align:left;padding:9px;border-bottom:1px solid #2b3a50}th{position:st
 th .sort-button{display:inline-flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:4px;padding:2px;color:inherit;font:inherit;font-weight:700;text-align:left;white-space:nowrap}
 th .sort-button:hover,th .sort-button:focus-visible{color:#7dd3fc;outline:1px solid #38bdf8;outline-offset:3px}
 .sort-indicator{display:inline-block;min-width:9px;color:#7dd3fc;font-size:.75rem}
+.validity-pill{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.02em;padding:4px 8px;border-radius:20px}.validity-valid{background:#064e3b;color:#a7f3d0}.validity-invalid{background:#7f1d1d;color:#fecaca}.validity-none{background:#243449;color:#cbd5e1}
 .table-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 8px}
 .table-tools input[type=search]{flex:1;min-width:240px;background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:8px;padding:11px 12px}
 .table-tools .small{margin-left:auto}
@@ -72,7 +73,7 @@ code{color:#bae6fd}
 
 <section class="panel" id="results" hidden>
 <h2>3. Comparison results</h2>
-<p class="muted">New MMSIs and missing values are detected separately. The merged personal CSV includes both databases' rows. The contribution CSV contains only information absent from the central DB; conflicting values are excluded unless you explicitly include them for review.</p>
+<p class="muted">New MMSIs and missing values are detected separately. The merged personal CSV includes both databases' rows. The contribution CSV contains only information absent from the central DB; conflicting values are excluded unless you explicitly include them for review. The Contribution validity column shows VALID for a candidate that passes all required checks, INVALID if the source record or proposed contribution fails validation, and NOT INCLUDED when a valid record adds no new information to the current central database.</p>
 <div class="stats">
 <div class="stat"><b id="centralCount">0</b><span>Central rows</span></div>
 <div class="stat"><b id="userCount">0</b><span>Your rows</span></div>
@@ -91,6 +92,7 @@ code{color:#bae6fd}
 <table><thead><tr>
 <th aria-sort="ascending"><button class="sort-button" type="button" data-sort="mmsi">MMSI <span class="sort-indicator" aria-hidden="true">▲</span></button></th>
 <th aria-sort="none"><button class="sort-button" type="button" data-sort="status">Finding <span class="sort-indicator" aria-hidden="true"></span></button></th>
+<th aria-sort="none"><button class="sort-button" type="button" data-sort="contributionValidity">Contribution validity <span class="sort-indicator" aria-hidden="true"></span></button></th>
 <th aria-sort="none"><button class="sort-button" type="button" data-sort="ship_type">ship_type <span class="sort-indicator" aria-hidden="true"></span></button></th>
 <th aria-sort="none"><button class="sort-button" type="button" data-sort="length_m">length_m <span class="sort-indicator" aria-hidden="true"></span></button></th>
 <th aria-sort="none"><button class="sort-button" type="button" data-sort="beam_m">beam_m <span class="sort-indicator" aria-hidden="true"></span></button></th>
@@ -292,10 +294,27 @@ function compareRows(){
   }
   for(const c of centralRows)if(!uMap.has(c.mmsi))results.push({mmsi:c.mmsi,status:'CENTRAL ONLY',base:c,user:null,contribution:false});
   const validContributions=[];
+  const validContributionMMSIs=new Set();
+  const invalidContributionMMSIs=new Map();
   for(const [mmsi,row] of candidates){
     const reasons=validShipData(row);
-    if(reasons.length)skippedContributions.push({mmsi,row,reasons,reason:row.reason||'NEW MMSI'});
-    else validContributions.push(Object.fromEntries(FIELDS.map(f=>[f,row[f]??''])));
+    if(reasons.length){
+      skippedContributions.push({mmsi,row,reasons,reason:row.reason||'NEW MMSI'});
+      invalidContributionMMSIs.set(mmsi,reasons);
+    }else{
+      validContributionMMSIs.add(mmsi);
+      validContributions.push(Object.fromEntries(FIELDS.map(f=>[f,row[f]??''])));
+    }
+  }
+  for(const result of results){
+    if(!result.user){result.contributionValidity='';result.contributionReasons=[];}
+    else if(validContributionMMSIs.has(result.mmsi)){result.contributionValidity='VALID';result.contributionReasons=[];}
+    else if(invalidContributionMMSIs.has(result.mmsi)){result.contributionValidity='INVALID';result.contributionReasons=invalidContributionMMSIs.get(result.mmsi);}
+    else{
+      const sourceReasons=validShipData(result.user);
+      if(sourceReasons.length){result.contributionValidity='INVALID';result.contributionReasons=sourceReasons;}
+      else{result.contributionValidity='NOT INCLUDED';result.contributionReasons=['No new or missing data selected for contribution'];}
+    }
   }
   window.mergedRows=[...all.values()];window.contributionRows=validContributions;
   $('centralCount').textContent=centralRows.length.toLocaleString();
@@ -316,6 +335,7 @@ function renderSkipped(){
 function getSortValue(r,key){
   if(key==='mmsi')return String(r.mmsi||'');
   if(key==='status')return String(r.status||'');
+  if(key==='contributionValidity')return String(r.contributionValidity||'');
   return String(r.user?.[key]||r.base?.[key]||'');
 }
 function compareTableValues(a,b,key){
@@ -331,7 +351,7 @@ function compareTableValues(a,b,key){
 }
 function rowMatchesTableSearch(r,query){
   if(!query)return true;
-  const values=[r.mmsi,r.status,...FIELDS.slice(1).flatMap(f=>[r.base?.[f],r.user?.[f]]),...(r.diffs||[]),...(r.missing||[])];
+  const values=[r.mmsi,r.status,r.contributionValidity,...(r.contributionReasons||[]),...FIELDS.slice(1).flatMap(f=>[r.base?.[f],r.user?.[f]]),...(r.diffs||[]),...(r.missing||[])];
   return values.some(v=>String(v??'').toLocaleLowerCase().includes(query));
 }
 function updateSortIndicators(){
@@ -350,7 +370,9 @@ function render(){
   $('tbody').innerHTML=list.map(r=>{
     const val=f=>{const c=r.base?.[f]||'',u=r.user?.[f]||'';return c&&u&&c!==u?esc(c)+' → <strong>'+esc(u)+'</strong>':esc(u||c||'—')};
     const cls=r.status==='NEW MMSI'?'new':r.status==='CONFLICT'?'changed':'same';
-    return '<tr><td>'+esc(r.mmsi)+'</td><td><span class="pill '+cls+'">'+esc(r.status)+'</span>'+(r.diffs?.length?'<div class="small">Conflicts: '+esc(r.diffs.join(', '))+'</div>':'')+'</td>'+FIELDS.slice(1).map(f=>'<td>'+val(f)+'</td>').join('')+'</tr>';
+    const validityClass=r.contributionValidity==='VALID'?'validity-valid':r.contributionValidity==='INVALID'?'validity-invalid':'validity-none';
+    const validityCell=r.contributionValidity?'<td><span class="validity-pill '+validityClass+'" title="'+esc((r.contributionReasons||[]).join('; '))+'">'+esc(r.contributionValidity)+'</span>'+(r.contributionValidity==='INVALID'?'<div class="small">'+esc((r.contributionReasons||[]).join('; '))+'</div>':'')+'</td>':'<td>—</td>';
+    return '<tr><td>'+esc(r.mmsi)+'</td><td><span class="pill '+cls+'">'+esc(r.status)+'</span>'+(r.diffs?.length?'<div class="small">Conflicts: '+esc(r.diffs.join(', '))+'</div>':'')+'</td>'+validityCell+FIELDS.slice(1).map(f=>'<td>'+val(f)+'</td>').join('')+'</tr>';
   }).join('');
   $('tableResultCount').textContent=list.length.toLocaleString()+' result'+(list.length===1?'':'s');
   $('tableHint').textContent='Showing '+list.length.toLocaleString()+' of '+unchangedFiltered.length.toLocaleString()+' rows after the unchanged-row filter ('+results.length.toLocaleString()+' total comparison rows). Sorting and search affect the table display only; exports use the full data set.';
