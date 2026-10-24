@@ -27,6 +27,13 @@ input[type=password]{flex:1;min-width:220px;background:#0b1728;color:#eef7ff;bor
 .tablewrap{overflow:auto;max-height:420px;margin-top:14px}
 table{border-collapse:collapse;width:100%;font-size:.82rem;white-space:nowrap}
 td,th{text-align:left;padding:9px;border-bottom:1px solid #2b3a50}th{position:sticky;top:0;background:#17253a}
+th .sort-button{display:inline-flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:4px;padding:2px;color:inherit;font:inherit;font-weight:700;text-align:left;white-space:nowrap}
+th .sort-button:hover,th .sort-button:focus-visible{color:#7dd3fc;outline:1px solid #38bdf8;outline-offset:3px}
+.sort-indicator{display:inline-block;min-width:9px;color:#7dd3fc;font-size:.75rem}
+.table-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 8px}
+.table-tools input[type=search]{flex:1;min-width:240px;background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:8px;padding:11px 12px}
+.table-tools .small{margin-left:auto}
+button.subtle{padding:8px 11px;background:#132238}
 .actions,.apirow{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
 .pill{font-size:.7rem;padding:3px 7px;border-radius:20px}.new{background:#064e3b;color:#a7f3d0}.changed{background:#713f12;color:#fde68a}.same{background:#243449;color:#cbd5e1}
 .options{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0}.options label{font-size:.9rem}
@@ -75,8 +82,20 @@ code{color:#bae6fd}
 <div class="stat"><b id="skippedCount">0</b><span>Skipped: invalid/incomplete</span></div>
 </div>
 <div class="options"><label><input id="hideSame" type="checkbox" checked> Hide unchanged rows</label></div>
+<div class="table-tools">
+<input id="tableSearch" type="search" placeholder="Search MMSI, finding, ship type, LOA, beam or date…" aria-label="Search comparison results">
+<button id="clearTableSearch" class="subtle" type="button">Clear</button>
+<span id="tableResultCount" class="small" aria-live="polite">0 results</span>
+</div>
 <div class="tablewrap">
-<table><thead><tr><th>MMSI</th><th>Finding</th><th>ship_type</th><th>length_m</th><th>beam_m</th><th>last_seen_utc</th></tr></thead><tbody id="tbody"></tbody></table>
+<table><thead><tr>
+<th aria-sort="ascending"><button class="sort-button" type="button" data-sort="mmsi">MMSI <span class="sort-indicator" aria-hidden="true">▲</span></button></th>
+<th aria-sort="none"><button class="sort-button" type="button" data-sort="status">Finding <span class="sort-indicator" aria-hidden="true"></span></button></th>
+<th aria-sort="none"><button class="sort-button" type="button" data-sort="ship_type">ship_type <span class="sort-indicator" aria-hidden="true"></span></button></th>
+<th aria-sort="none"><button class="sort-button" type="button" data-sort="length_m">length_m <span class="sort-indicator" aria-hidden="true"></span></button></th>
+<th aria-sort="none"><button class="sort-button" type="button" data-sort="beam_m">beam_m <span class="sort-indicator" aria-hidden="true"></span></button></th>
+<th aria-sort="none"><button class="sort-button" type="button" data-sort="last_seen_utc">last_seen_utc <span class="sort-indicator" aria-hidden="true"></span></button></th>
+</tr></thead><tbody id="tbody"></tbody></table>
 </div>
 <p id="tableHint" class="small"></p>
 <div class="actions">
@@ -134,6 +153,8 @@ const API_BASE='https://xpais-shipdb-api.ignobilis-4370.workers.dev';
 const $=id=>document.getElementById(id);
 const FIELDS=['mmsi','ship_type','length_m','beam_m','last_seen_utc'];
 let centralRows=[],userRows=[],centralComments=[],centralHeaders=FIELDS,results=[],centralReady=false,skippedContributions=[];let publicationCandidateRows=null,publicationComments=[],publicationConflicts=[];
+let tableSort={key:'mmsi',direction:1};
+let tableSearch='';
 
 function parseRecords(text){
   const records=[];let row=[],field='',quoted=false;
@@ -292,14 +313,48 @@ function renderSkipped(){
   $('skippedBody').innerHTML=skippedContributions.map(x=>'<tr><td>'+esc(x.mmsi)+'</td><td>'+esc(x.reasons.join('; '))+'</td><td>'+esc(x.row.ship_type||'—')+'</td><td>'+esc(x.row.length_m||'—')+'</td><td>'+esc(x.row.beam_m||'—')+'</td></tr>').join('');
   $('skippedHint').textContent=skippedContributions.length?skippedContributions.length.toLocaleString()+' records skipped. They will not be included in ship_db_contribution.csv.':'No records were skipped for missing or invalid AIS Type, LOA, or BEAM.';
 }
+function getSortValue(r,key){
+  if(key==='mmsi')return String(r.mmsi||'');
+  if(key==='status')return String(r.status||'');
+  return String(r.user?.[key]||r.base?.[key]||'');
+}
+function compareTableValues(a,b,key){
+  const av=getSortValue(a,key),bv=getSortValue(b,key);
+  if(key==='ship_type'||key==='length_m'||key==='beam_m'){
+    const an=Number(av),bn=Number(bv);
+    const aValid=av!==''&&Number.isFinite(an),bValid=bv!==''&&Number.isFinite(bn);
+    if(aValid&&bValid)return an-bn;
+    if(aValid!==bValid)return aValid?-1:1;
+  }
+  // MMSIs are fixed-width strings; numeric-aware comparison preserves their natural order.
+  return av.localeCompare(bv,undefined,{numeric:true,sensitivity:'base'});
+}
+function rowMatchesTableSearch(r,query){
+  if(!query)return true;
+  const values=[r.mmsi,r.status,...FIELDS.slice(1).flatMap(f=>[r.base?.[f],r.user?.[f]]),...(r.diffs||[]),...(r.missing||[])];
+  return values.some(v=>String(v??'').toLocaleLowerCase().includes(query));
+}
+function updateSortIndicators(){
+  document.querySelectorAll('.sort-button').forEach(button=>{
+    const active=button.dataset.sort===tableSort.key;
+    const th=button.closest('th');
+    if(th)th.setAttribute('aria-sort',active?(tableSort.direction===1?'ascending':'descending'):'none');
+    const indicator=button.querySelector('.sort-indicator');
+    if(indicator)indicator.textContent=active?(tableSort.direction===1?'▲':'▼'):'';
+  });
+}
 function render(){
-  const list=results.filter(r=>!$('hideSame').checked||r.status!=='MATCH');
+  const unchangedFiltered=results.filter(r=>!$('hideSame').checked||r.status!=='MATCH');
+  const list=unchangedFiltered.filter(r=>rowMatchesTableSearch(r,tableSearch));
+  list.sort((a,b)=>compareTableValues(a,b,tableSort.key)*tableSort.direction);
   $('tbody').innerHTML=list.map(r=>{
     const val=f=>{const c=r.base?.[f]||'',u=r.user?.[f]||'';return c&&u&&c!==u?esc(c)+' → <strong>'+esc(u)+'</strong>':esc(u||c||'—')};
     const cls=r.status==='NEW MMSI'?'new':r.status==='CONFLICT'?'changed':'same';
     return '<tr><td>'+esc(r.mmsi)+'</td><td><span class="pill '+cls+'">'+esc(r.status)+'</span>'+(r.diffs?.length?'<div class="small">Conflicts: '+esc(r.diffs.join(', '))+'</div>':'')+'</td>'+FIELDS.slice(1).map(f=>'<td>'+val(f)+'</td>').join('')+'</tr>';
   }).join('');
-  $('tableHint').textContent='Showing '+list.length.toLocaleString()+' of '+results.length.toLocaleString()+'. This website does not directly modify the central database.';
+  $('tableResultCount').textContent=list.length.toLocaleString()+' result'+(list.length===1?'':'s');
+  $('tableHint').textContent='Showing '+list.length.toLocaleString()+' of '+unchangedFiltered.length.toLocaleString()+' rows after the unchanged-row filter ('+results.length.toLocaleString()+' total comparison rows). Sorting and search affect the table display only; exports use the full data set.';
+  updateSortIndicators();
 }
 function download(name,rows,comments){
   const out=[...(comments.length?comments:['# XPAISTraffic ShipDB - generated by community merger']),FIELDS.join(',')];
@@ -312,6 +367,24 @@ $('compareBtn').addEventListener('click',async()=>{
   catch(e){$('status').className='status err';$('status').textContent=e.message;}
 });
 $('hideSame').addEventListener('change',render);
+$('tableSearch').addEventListener('input',()=>{
+  tableSearch=$('tableSearch').value.trim().toLocaleLowerCase();
+  render();
+});
+$('clearTableSearch').addEventListener('click',()=>{
+  $('tableSearch').value='';
+  tableSearch='';
+  render();
+  $('tableSearch').focus();
+});
+document.querySelectorAll('.sort-button').forEach(button=>{
+  button.addEventListener('click',()=>{
+    const key=button.dataset.sort;
+    if(tableSort.key===key)tableSort.direction*=-1;
+    else{tableSort.key=key;tableSort.direction=1;}
+    render();
+  });
+});
 $('fillBlanks').addEventListener('change',()=>{});
 $('replaceCentral').addEventListener('change',()=>{});
 $('downloadMerged').addEventListener('click',()=>{download('ship_db_merged.csv',window.mergedRows,centralComments);$('exportStatus').textContent='The merged personal CSV has been created.'});
@@ -378,7 +451,7 @@ async function loadAdmin(){
 }
 $('loadAdmin').addEventListener('click',loadAdmin);
 $('resetBtn').addEventListener('click',()=>{
-  $('userFile').value='';$('results').hidden=true;$('status').className='status';$('status').textContent='Waiting for the central database and your CSV.';
+  $('userFile').value='';$('tableSearch').value='';tableSearch='';tableSort={key:'mmsi',direction:1};$('results').hidden=true;$('status').className='status';$('status').textContent='Waiting for the central database and your CSV.';
   $('compareBtn').disabled=true;userRows=[];results=[];window.mergedRows=[];window.contributionRows=[];
 });
 
