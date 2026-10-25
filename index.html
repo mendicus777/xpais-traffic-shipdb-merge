@@ -54,9 +54,9 @@ code{color:#bae6fd}
 
 <section class="panel">
 <h2>1. Central database</h2>
-<p class="muted">The central <code>ship_db.csv</code> is stored in a private Cloudflare R2 bucket and is retrieved only after the CSV access password is verified.</p>
-<div class="apirow"><input id="csvPassword" type="password" autocomplete="off" placeholder="CSV access password (not saved)" aria-label="CSV access password"><button id="loadCentralBtn" class="primary">Load central database</button></div>
-<div id="centralStatus" class="status">Enter the CSV access password to load the central database.</div>
+<p class="muted">The central <code>ship_db.csv</code> is stored in private storage. Access is restricted to approved Payware Vessel Pack owners, each using an individual access token. Request your token by private message on X-Plane.org or Ko-fi. Store it securely (for example, in KeePass); do not share it. Tokens are shown only once when issued and cannot be retrieved later. This page does not save your token.</p>
+<div class="apirow"><input id="userToken" type="password" autocomplete="off" placeholder="Your personal access token (not saved)" aria-label="Personal access token"><button id="loadCentralBtn" class="primary">Load central database</button></div>
+<div id="centralStatus" class="status">Enter your personal access token to load the central database.</div>
 <h2 style="margin-top:22px">2. Your database</h2>
 <p class="muted">Select your local <code>ship_db.csv</code>. It is read locally in your browser.</p>
 <input id="userFile" type="file" accept=".csv,text/csv">
@@ -126,7 +126,36 @@ code{color:#bae6fd}
 <input id="adminToken" type="password" autocomplete="off" placeholder="ADMIN_TOKEN (not saved)">
 <button class="primary" id="loadAdmin">Load contributions</button>
 </div>
-<div id="adminStatus" class="status">Admin access has not been requested.</div>
+<div id="adminStatus" class="status">Admin access has not been requested.</div> 
+<hr style="border:0;border-top:1px solid #2c3a50;margin:22px 0">
+
+<h3>User access tokens</h3>
+<p class="muted">
+  Manage individual access tokens for approved Payware Vessel Pack owners.
+  Use the same ADMIN_TOKEN as contribution review. A new or rotated token
+  is shown once only. Copy it to a secure password manager before closing
+  the page, and deliver it privately to the intended user.
+</p>
+
+<div class="apirow">
+  <input
+    id="newUserLabel"
+    type="text"
+    maxlength="100"
+    autocomplete="off"
+    placeholder="User label (e.g. X-Plane.org username)"
+    aria-label="New user label"
+  >
+  <button class="primary" id="createUserToken">Create user token</button>
+  <button id="loadUserTokens">Refresh user list</button>
+</div>
+
+<div id="userTokenAdminStatus" class="status">
+  User-token management has not been requested.
+</div>
+
+<div id="userTokenResult" class="status" hidden></div>
+<div id="userTokenList"></div>
 <div id="adminList"></div>
 <hr style="border:0;border-top:1px solid #2c3a50;margin:22px 0">
 <h3>5. Prepare weekly ShipDB update</h3>
@@ -209,39 +238,55 @@ function makeCSV(rows,comments=[]){
 }
 async function loadCentral(){
   const button=$('loadCentralBtn');
-  const password=$('csvPassword').value.trim();
-  if(!password){
+  const token=$('userToken').value.trim();
+
+  if(!token){
     $('centralStatus').className='status err';
-    $('centralStatus').textContent='Enter the CSV access password first.';
+    $('centralStatus').textContent='Enter your personal access token first.';
     return;
   }
+
   button.disabled=true;
   centralReady=false;
   $('compareBtn').disabled=true;
   $('centralStatus').className='status';
   $('centralStatus').textContent='Authenticating and loading the central database…';
+
   try{
     const response=await fetch(API_BASE+'/api/central-db',{
       method:'GET',
-      headers:{Authorization:'Bearer '+password},
+      headers:{Authorization:'Bearer '+token},
       cache:'no-store'
     });
+
     if(!response.ok){
       let detail='';
-      try{const data=await response.json();detail=data.error||'';}catch{}
-      if(response.status===401)throw Error('Access denied. Check the CSV access password.');
-      throw Error((detail||'HTTP '+response.status));
+      try{
+        const data=await response.json();
+        detail=data.error||'';
+      }catch{}
+
+      if(response.status===401){
+        throw Error('Access denied. Check that your personal access token is correct and has not been revoked.');
+      }
+
+      throw Error(detail||'HTTP '+response.status);
     }
+
     const parsed=parseCSV(await response.text());
     centralRows=parsed.rows;
     centralComments=parsed.comments;
     centralHeaders=parsed.headers;
     centralReady=true;
+
     $('centralStatus').className='status ok';
     $('centralStatus').textContent='Authenticated. Central database loaded: '+centralRows.length.toLocaleString()+' records.';
     $('compareBtn').disabled=!$('userFile').files.length;
   }catch(e){
-    centralRows=[];centralComments=[];centralHeaders=FIELDS;centralReady=false;
+    centralRows=[];
+    centralComments=[];
+    centralHeaders=FIELDS;
+    centralReady=false;
     $('centralStatus').className='status err';
     $('centralStatus').textContent='Could not load central CSV: '+e.message;
   }finally{
@@ -249,7 +294,7 @@ async function loadCentral(){
   }
 }
 $('loadCentralBtn').addEventListener('click',loadCentral);
-$('csvPassword').addEventListener('keydown',event=>{if(event.key==='Enter')loadCentral();});
+$('userToken').addEventListener('keydown',event=>{if(event.key==='Enter')loadCentral();});
 $('userFile').addEventListener('change',()=>{
   $('compareBtn').disabled=!(centralReady&&$('userFile').files.length);
   $('status').textContent=$('userFile').files.length?'Local file selected: '+$('userFile').files[0].name:'Please select a CSV file.';
@@ -420,7 +465,9 @@ $('uploadContribution').addEventListener('click',async()=>{
   if(!rows.length){$('uploadStatus').className='status err';$('uploadStatus').textContent='No valid contribution records are available. Review the comparison and skipped records first.';return;}
   const button=$('uploadContribution');button.disabled=true;$('uploadStatus').className='status';$('uploadStatus').textContent='Uploading '+rows.length+' records…';
   try{
-    const response=await fetch(API_BASE+'/api/contributions',{method:'POST',headers:{'Content-Type':'text/csv'},body:makeCSV(rows)});
+    const accessToken=$('userToken').value.trim();
+    if(!accessToken)throw Error('Enter your personal access token and load the central database first.');
+    const response=await fetch(API_BASE+'/api/contributions',{method:'POST',headers:{'Content-Type':'text/csv','Authorization':'Bearer '+accessToken},body:makeCSV(rows)});
     const data=await response.json();if(!response.ok)throw Error(data.error||('HTTP '+response.status));
     $('uploadStatus').className='status ok';
     $('uploadStatus').textContent='Upload successful. Contribution ID: '+data.id+'\nStatus: '+data.status+'\nRecords: '+data.rowCount+'\nThe contribution is awaiting review and has not changed the central database.';
@@ -428,6 +475,243 @@ $('uploadContribution').addEventListener('click',async()=>{
   finally{button.disabled=false;}
 });
 function adminHeaders(){return{Authorization:'Bearer '+$('adminToken').value.trim()};}
+function requireAdminToken(){
+  if(!$('adminToken').value.trim()){
+    $('userTokenAdminStatus').className='status err';
+    $('userTokenAdminStatus').textContent='Enter ADMIN_TOKEN in the contribution-review section first.';
+    return false;
+  }
+  return true;
+}
+
+function showOneTimeUserToken(data,action){
+  const box=$('userTokenResult');
+  box.hidden=false;
+  box.className='status ok';
+  box.replaceChildren();
+
+  const heading=document.createElement('strong');
+  heading.textContent=action+' — copy this token now';
+  box.appendChild(heading);
+
+  const note=document.createElement('p');
+  note.textContent='The raw token cannot be retrieved later. Save it securely and send it privately to the intended user.';
+  box.appendChild(note);
+
+  const field=document.createElement('input');
+  field.type='text';
+  field.readOnly=true;
+  field.autocomplete='off';
+  field.value=data.token;
+  field.setAttribute('aria-label','New personal access token');
+  field.style.width='100%';
+  field.style.margin='8px 0';
+  box.appendChild(field);
+
+  const copy=document.createElement('button');
+  copy.textContent='Copy token';
+
+  copy.addEventListener('click',async()=>{
+    try{
+      await navigator.clipboard.writeText(data.token);
+      copy.textContent='Copied';
+    }catch{
+      field.focus();
+      field.select();
+      copy.textContent='Select and copy the token';
+    }
+  });
+
+  box.appendChild(copy);
+}
+
+async function loadAdminUsers(){
+  if(!requireAdminToken())return;
+
+  const button=$('loadUserTokens');
+  button.disabled=true;
+  $('userTokenAdminStatus').className='status';
+  $('userTokenAdminStatus').textContent='Loading user access tokens…';
+  $('userTokenList').replaceChildren();
+
+  try{
+    const response=await fetch(API_BASE+'/api/admin/users',{
+      headers:adminHeaders(),
+      cache:'no-store'
+    });
+
+    const data=await response.json();
+    if(!response.ok)throw Error(data.error||('HTTP '+response.status));
+
+    const users=data.users||[];
+
+    $('userTokenAdminStatus').className='status ok';
+    $('userTokenAdminStatus').textContent=
+      'Loaded '+users.length+' user token record(s). Raw tokens are never listed.';
+
+    if(!users.length){
+      $('userTokenList').textContent='No user tokens have been created yet.';
+      return;
+    }
+
+    for(const user of users){
+      const card=document.createElement('div');
+      card.className='adminitem';
+
+      const title=document.createElement('strong');
+      title.textContent=user.label;
+      card.appendChild(title);
+
+      const meta=document.createElement('div');
+      meta.className='adminmeta';
+      meta.textContent=
+        (user.active?'ACTIVE':'REVOKED')+
+        ' · Created: '+(user.createdAt||'unknown')+
+        ' · Last used: '+(user.lastUsedAt||'never')+
+        (user.revokedAt?' · Revoked: '+user.revokedAt:'');
+
+      card.appendChild(meta);
+
+      const controls=document.createElement('div');
+      controls.className='apirow';
+
+      const rotate=document.createElement('button');
+      rotate.textContent='Rotate token';
+
+      rotate.addEventListener('click',async()=>{
+        if(!window.confirm(
+          'Rotate the token for "'+user.label+
+          '"? The previous token will stop working immediately.'
+        ))return;
+
+        rotate.disabled=true;
+
+        try{
+          const response=await fetch(
+            API_BASE+'/api/admin/users/'+encodeURIComponent(user.id)+'/rotate',
+            {
+              method:'POST',
+              headers:adminHeaders()
+            }
+          );
+
+          const data=await response.json();
+          if(!response.ok)throw Error(data.error||('HTTP '+response.status));
+
+          showOneTimeUserToken(data,'New token for '+user.label);
+          await loadAdminUsers();
+        }catch(e){
+          $('userTokenAdminStatus').className='status err';
+          $('userTokenAdminStatus').textContent=
+            'Could not rotate token: '+e.message;
+        }finally{
+          rotate.disabled=false;
+        }
+      });
+
+      controls.appendChild(rotate);
+
+      if(user.active){
+        const revoke=document.createElement('button');
+        revoke.textContent='Revoke token';
+
+        revoke.addEventListener('click',async()=>{
+          if(!window.confirm(
+            'Revoke the token for "'+user.label+
+            '"? This user will lose access immediately.'
+          ))return;
+
+          revoke.disabled=true;
+
+          try{
+            const response=await fetch(
+              API_BASE+'/api/admin/users/'+encodeURIComponent(user.id)+'/revoke',
+              {
+                method:'POST',
+                headers:adminHeaders()
+              }
+            );
+
+            const data=await response.json();
+            if(!response.ok)throw Error(data.error||('HTTP '+response.status));
+
+            await loadAdminUsers();
+
+            $('userTokenAdminStatus').className='status ok';
+            $('userTokenAdminStatus').textContent=
+              'Access revoked for '+user.label+
+              '. Existing contributions remain in the review queue.';
+          }catch(e){
+            $('userTokenAdminStatus').className='status err';
+            $('userTokenAdminStatus').textContent=
+              'Could not revoke token: '+e.message;
+          }finally{
+            revoke.disabled=false;
+          }
+        });
+
+        controls.appendChild(revoke);
+      }
+
+      card.appendChild(controls);
+      $('userTokenList').appendChild(card);
+    }
+  }catch(e){
+    $('userTokenAdminStatus').className='status err';
+    $('userTokenAdminStatus').textContent=
+      'User-token request failed: '+e.message;
+  }finally{
+    button.disabled=false;
+  }
+}
+
+$('loadUserTokens').addEventListener('click',loadAdminUsers);
+
+$('createUserToken').addEventListener('click',async()=>{
+  if(!requireAdminToken())return;
+
+  const label=$('newUserLabel').value.trim();
+
+  if(!label){
+    $('userTokenAdminStatus').className='status err';
+    $('userTokenAdminStatus').textContent='Enter a user label first.';
+    return;
+  }
+
+  const button=$('createUserToken');
+  button.disabled=true;
+  $('userTokenAdminStatus').className='status';
+  $('userTokenAdminStatus').textContent='Creating user token…';
+
+  try{
+    const response=await fetch(API_BASE+'/api/admin/users',{
+      method:'POST',
+      headers:{
+        ...adminHeaders(),
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({label})
+    });
+
+    const data=await response.json();
+    if(!response.ok)throw Error(data.error||('HTTP '+response.status));
+
+    $('newUserLabel').value='';
+    showOneTimeUserToken(data,'New token for '+data.user.label);
+
+    $('userTokenAdminStatus').className='status ok';
+    $('userTokenAdminStatus').textContent=
+      'User token created. Copy and securely store it before navigating away.';
+
+    await loadAdminUsers();
+  }catch(e){
+    $('userTokenAdminStatus').className='status err';
+    $('userTokenAdminStatus').textContent=
+      'Could not create user token: '+e.message;
+  }finally{
+    button.disabled=false;
+  }
+});
 async function loadAdmin(){
   if(!$('adminToken').value.trim()){$('adminStatus').className='status err';$('adminStatus').textContent='Enter the admin token first.';return;}
   const button=$('loadAdmin');button.disabled=true;$('adminStatus').className='status';$('adminStatus').textContent='Loading contributions…';$('adminList').replaceChildren();
@@ -441,7 +725,13 @@ async function loadAdmin(){
       const card=document.createElement('div');card.className='adminitem';
       const title=document.createElement('strong');title.textContent='Contribution '+item.id;card.appendChild(title);
       const meta=document.createElement('div');meta.className='adminmeta';
-      meta.textContent='Submitted: '+(item.submittedAt||'unknown')+' · Rows: '+(item.rowCount??'unknown')+' · Updated: '+(item.updatedAt||'unknown');card.appendChild(meta);
+      meta.textContent=
+        'Submitted by: '+(item.submittedByLabel||'Legacy / unknown')+
+        ' · Submitted: '+(item.submittedAt||'unknown')+
+        ' · Rows: '+(item.rowCount??'unknown')+
+        ' · Updated: '+(item.updatedAt||'unknown')+
+        ' · Status: '+(item.status||'Pending');
+      card.appendChild(meta);
       const controls=document.createElement('div');controls.className='apirow';
       const select=document.createElement('select');
       for(const status of ['Pending','In Review','Accepted','Rejected','Published']){const option=document.createElement('option');option.value=status;option.textContent=status;select.appendChild(option);}
@@ -452,7 +742,12 @@ async function loadAdmin(){
         try{
           const r=await fetch(API_BASE+'/api/admin/contributions/'+encodeURIComponent(item.id)+'/status',{method:'POST',headers:{...adminHeaders(),'Content-Type':'application/json'},body:JSON.stringify({status:select.value})});
           const d=await r.json();if(!r.ok)throw Error(d.error||('HTTP '+r.status));
-          meta.textContent='Submitted: '+(d.contribution.submittedAt||'unknown')+' · Rows: '+(d.contribution.rowCount??'unknown')+' · Updated: '+(d.contribution.updatedAt||'unknown')+' · Status: '+d.contribution.status;
+          meta.textContent=
+            'Submitted by: '+(d.contribution.submittedByLabel||'Legacy / unknown')+
+          ' · Submitted: '+(d.contribution.submittedAt||'unknown')+
+          ' · Rows: '+(d.contribution.rowCount??'unknown')+
+          ' · Updated: '+(d.contribution.updatedAt||'unknown')+
+          ' · Status: '+d.contribution.status;
           save.textContent='Saved';
         }catch(e){$('adminStatus').className='status err';$('adminStatus').textContent='Could not update status: '+e.message;}
         finally{save.disabled=false;}
