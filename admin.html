@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex,nofollow">
+<title>XPAISTraffic ShipDB Admin</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#e8edf5;background:#0b1220}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 15% 0%,#172a43,transparent 42%),#0b1220;min-height:100vh}
+main{max-width:1150px;margin:auto;padding:36px 20px}
+h1{font-size:clamp(2rem,5vw,3rem);margin:8px 0}h1 span{color:#7dd3fc}
+h3{margin-top:26px}
+.muted{color:#9fb0c6;line-height:1.6}
+.panel{background:#111b2c;border:1px solid #2c3a50;border-radius:14px;padding:20px;margin:18px 0}
+.subpanel{border:1px solid #26364d;border-radius:10px;padding:14px;margin:14px 0;background:#0e1828}
+.eyebrow{color:#7dd3fc;text-transform:uppercase;letter-spacing:.15em;font-size:.75rem;font-weight:700}
+button{background:#1a2b42;border:1px solid #3c506c;color:#eef7ff;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+button.primary{background:#0284c7;border-color:#0ea5e9}
+button.danger{background:#7f1d1d;border-color:#b91c1c}
+button.subtle{padding:7px 10px;background:#132238}
+button:disabled{opacity:.45;cursor:not-allowed}
+input[type=file]{display:block;margin-top:12px;max-width:100%}
+input[type=password],input[type=text],input[type=date],select{background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:8px;padding:9px}
+input[type=password]{flex:1;min-width:220px}
+.status{padding:12px;background:#0b1728;border-radius:8px;white-space:pre-wrap;line-height:1.5;margin-top:12px}
+.ok{color:#bbf7d0}.err{color:#fecaca}.warn{color:#fde68a}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:#0b1728;padding:14px;border:1px solid #26364d;border-radius:9px}
+.stat b{display:block;font-size:1.5rem}.stat span{font-size:.8rem;color:#9fb0c6}
+.tablewrap{overflow:auto;max-height:460px;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:.82rem;white-space:nowrap}
+td,th{text-align:left;padding:8px;border-bottom:1px solid #2b3a50;vertical-align:top}th{position:sticky;top:0;background:#17253a;z-index:1}
+th .sort-button{display:inline-flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:4px;padding:2px;color:inherit;font:inherit;font-weight:700;text-align:left;white-space:nowrap}
+th .sort-button:hover,th .sort-button:focus-visible{color:#7dd3fc;outline:1px solid #38bdf8;outline-offset:3px}
+.sort-indicator{display:inline-block;min-width:9px;color:#7dd3fc;font-size:.75rem}
+.pill{display:inline-block;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:20px;background:#243449;color:#cbd5e1}
+.p-new,.p-valid,.p-sync{background:#064e3b;color:#a7f3d0}.p-conflict,.p-warn{background:#713f12;color:#fde68a}.p-invalid{background:#7f1d1d;color:#fecaca}.p-fill{background:#1e3a8a;color:#bfdbfe}
+.table-tools,.actions,.apirow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.table-tools input[type=search]{flex:1;min-width:240px;background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:8px;padding:10px 12px}
+.options{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0}.options label{font-size:.9rem}
+.small{font-size:.8rem;color:#9fb0c6}
+.stale{outline:2px solid #b45309;outline-offset:4px}
+.adminmeta{color:#9fb0c6;font-size:.8rem;line-height:1.5;margin:4px 0}
+.adminitem{border:1px solid #2b3a50;border-radius:8px;padding:12px;margin:10px 0;background:#0b1728}
+.banner{border:1px solid #b45309;background:#2b1d0a;border-radius:10px;padding:12px;margin-top:12px}
+code{color:#bae6fd}
+@media(max-width:650px){main{padding:20px 12px}.panel{padding:15px}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">XPAISTraffic · ShipDB administration</div>
+<h1>ShipDB <span>Admin</span></h1>
+<p class="muted">Maintainer page: status migration, contribution review, publication, last-seen audit and user tokens. Every action is authorized by the Worker with the ADMIN_TOKEN; this page itself grants no access.</p>
+
+<section class="panel">
+<h2>Admin access</h2>
+<p class="muted">Requires the ADMIN_TOKEN. The token is kept only in this page's memory and sent only in the Authorization header; it is not stored. No personal access token is needed here.</p>
+<div class="apirow">
+<input id="adminToken" type="password" autocomplete="off" placeholder="ADMIN_TOKEN (not saved)" aria-label="Admin token">
+<button class="primary" id="loadAdmin">Load admin state</button>
+</div>
+<div id="adminStatus" class="status">Admin access has not been requested.</div>
+<div id="openPublicationBanner" class="banner" hidden></div>
+
+<div id="migrationPanel" class="subpanel" hidden>
+<h3 style="margin-top:0">Contribution status migration (R2 metadata → D1)</h3>
+<p class="small">Until the migration is activated, contribution submissions, status changes and publication are unavailable (503 MIGRATION_PENDING). Loading the central database and the last-seen synchronization keep working. Entries with a missing, invalid or future submission timestamp need a decision (set the UTC submission time, e.g. <code>2026-10-20T14:30:00Z</code>, or exclude) before import; there is no automatic fallback. The dry run records an immutable list of the existing contributions and their R2 ETags. Records with an unknown or missing status must be decided before activation.</p>
+<div class="apirow">
+<button id="migDryRun" class="primary">Run dry run</button>
+<button id="migReport">Refresh report</button>
+<button id="migImport">Import into D1</button>
+<button id="migActivate" class="danger">Activate D1 as status source</button>
+</div>
+<div id="migrationStatus" class="status">No migration report loaded.</div>
+<div class="tablewrap"><table><thead><tr><th>Contribution</th><th>Legacy status</th><th>Problem(s)</th><th>Decision</th><th>Action</th></tr></thead><tbody id="migrationProblems"></tbody></table></div>
+</div>
+
+<div id="contributionsPanel" class="subpanel" hidden>
+<h3 style="margin-top:0">Contributions</h3>
+<div class="apirow">
+<label class="small">Status <select id="contribStatusFilter"><option value="">All</option><option>Pending</option><option>In Review</option><option>Accepted</option><option>Rejected</option><option>Published</option></select></label>
+<label class="small">Upload <select id="contribUploadFilter"><option value="complete">Complete</option><option value="staged">Staged (incomplete)</option><option value="discarded">Discarded</option><option value="all">All</option></select></label>
+<button id="contribReload" class="subtle">Reload</button>
+<span id="contribCounts" class="small"></span>
+</div>
+<div class="tablewrap"><table><thead><tr><th>Select</th><th>Contribution</th><th>Submitted</th><th>By</th><th>Rows</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminList"></tbody></table></div>
+<div class="table-tools">
+<button id="contribPrev" class="subtle">◀ Previous</button><span id="contribPage" class="small"></span><button id="contribNext" class="subtle">Next ▶</button>
+</div>
+</div>
+
+<div id="publicationPanel" class="subpanel" hidden>
+<h3 style="margin-top:0">Publish accepted contributions</h3>
+<p class="small">Select Accepted contributions above, create a preview, decide every conflict, then publish. The Worker reads the current central file, writes a backup to <code>backups/</code> and updates the central file with an ETag check. Newer <code>last_seen_utc</code> values in the central file are always kept. A preview is valid for 30 minutes and only for exactly the selected contributions.</p>
+<div class="apirow">
+<button id="pubPreview" class="primary">Create preview for selected</button>
+<span id="pubSelection" class="small">0 selected</span>
+</div>
+<div id="publicationStatus" class="status">No preview has been created.</div>
+<div class="tablewrap"><table><thead><tr><th>MMSI</th><th>Field</th><th>Current value</th><th>Decision</th></tr></thead><tbody id="publicationConflictBody"></tbody></table></div>
+<div class="apirow"><button id="pubCommit" class="primary" disabled>Publish</button><span id="pubDecisionInfo" class="small"></span></div>
+<h4>Recent publications</h4>
+<div class="tablewrap"><table><thead><tr><th>Publication</th><th>State</th><th>Created</th><th>Backup</th><th>Summary</th></tr></thead><tbody id="publicationList"></tbody></table></div>
+</div>
+
+<div id="auditPanel" class="subpanel" hidden>
+<h3 style="margin-top:0">Last-seen synchronization per user</h3>
+<p class="small">Executed updates per user and UTC day, plus recent requests. The synchronization checks consistency only; it cannot prove that a user actually saw a vessel.</p>
+<div class="apirow"><input id="auditDate" type="date" aria-label="UTC date"><button id="auditLoad" class="subtle">Load</button></div>
+<div class="tablewrap"><table><thead><tr><th>User</th><th>Updates (day)</th><th>Last update</th></tr></thead><tbody id="auditDaily"></tbody></table></div>
+<div class="tablewrap"><table><thead><tr><th>Time (UTC)</th><th>User</th><th>Result</th><th>Received</th><th>Updated</th><th>Unchanged</th><th>Mismatched</th><th>Not found</th><th>Rejected</th><th>Rate limited</th></tr></thead><tbody id="auditList"></tbody></table></div>
+</div>
+
+<h3>User access tokens</h3>
+<p class="muted">Create access tokens for interested VesselPack owners.</p>
+<div class="apirow">
+<input id="newUserLabel" type="text" maxlength="100" autocomplete="off" placeholder="User label (e.g. X-Plane.org username)" aria-label="New user label">
+<button class="primary" id="createUserToken">Create user token</button>
+<button id="loadUserTokens">Refresh user list</button>
+</div>
+<div id="userTokenAdminStatus" class="status">User-token management has not been requested.</div>
+<div id="userTokenResult" class="status" hidden></div>
+<div id="userTokenList"></div>
+</section>
+
+<footer class="small">Core vessel data changes only through reviewed contributions and the server-side publication. The central ship_db.csv is stored in private Cloudflare R2 storage; every publication writes a backup to backups/ first.</footer>
+</main>
+
+<script>
+'use strict';
+const API_BASE='https://xpais-shipdb-api.ignobilis-4370.workers.dev';
+const $=id=>document.getElementById(id);
+
+function daysFromCivil(y,m,d){y-=m<=2?1:0;const era=Math.floor(y/400),yoe=y-era*400,mp=(m+9)%12,doy=Math.floor((153*mp+2)/5)+d-1,doe=yoe*365+Math.floor(yoe/4)-Math.floor(yoe/100)+doy;return era*146097+doe-719468}
+function dayToIso(z){z+=719468;const era=Math.floor(z/146097),doe=z-era*146097,yoe=Math.floor((doe-Math.floor(doe/1460)+Math.floor(doe/36524)-Math.floor(doe/146096))/365);let y=yoe+era*400;const doy=doe-(365*yoe+Math.floor(yoe/4)-Math.floor(yoe/100)),mp=Math.floor((5*doy+2)/153),d=doy-Math.floor((153*mp+2)/5)+1,m=mp<10?mp+3:mp-9;y+=m<=2?1:0;return String(y).padStart(4,'0')+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
+// Strict YYYY-MM-DD -> UTC day number or null (no Date.parse, no local time zone).
+function parseIsoDay(v){if(typeof v!=='string'||v.length!==10||v[4]!=='-'||v[7]!=='-')return null;for(const i of [0,1,2,3,5,6,8,9]){const c=v.charCodeAt(i);if(c<48||c>57)return null}const y=+v.slice(0,4),m=+v.slice(5,7),d=+v.slice(8,10);if(m<1||m>12||d<1||d>31)return null;const day=daysFromCivil(y,m,d);return dayToIso(day)===v?day:null}
+function utcToday(){return Math.floor(Date.now()/86400000)}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+// ---------------------------------------------------------------------------
+// API helpers: safe JSON, readable errors
+// ---------------------------------------------------------------------------
+async function api(path,{method='GET',headers={},body,token}={}){
+  let response;
+  try{
+    response=await fetch(API_BASE+path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...headers},body,cache:'no-store'});
+  }catch(e){
+    const err=Error('Network error: the API could not be reached. Check your connection and try again.');err.status=0;throw err;
+  }
+  const text=await response.text();
+  let data=null;
+  try{data=text?JSON.parse(text):{}}catch{data=null}
+  if(!response.ok){
+    const err=Error(describeError(response.status,data,text));
+    err.status=response.status;err.data=data||{};throw err;
+  }
+  return data===null?{raw:text}:data;
+}
+function describeError(status,data,text){
+  const code=data&&data.code?' ['+data.code+']':'';
+  const msg=data&&data.error?data.error:(text?text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160):'');
+  const prefix={0:'Network error',400:'Request rejected',401:'Access denied',403:'Forbidden',404:'Not found',409:'Conflict',410:'Expired',413:'Too large',415:'Wrong content type',429:'Too many requests',500:'Server error',502:'Bad gateway',503:'Service unavailable'}[status]||('HTTP '+status);
+  let out=prefix+code+(msg?': '+msg:'');
+  if(status===401&&!(data&&data.code))out+=' Check the token.';
+  if(data&&data.requestId)out+=' (request '+data.requestId+')';
+  return out;
+}
+function setStatus(id,text,cls=''){const el=$(id);el.className='status'+(cls?' '+cls:'');el.textContent=text}
+
+// ---------------------------------------------------------------------------
+// 4: administration
+// ---------------------------------------------------------------------------
+function adminToken(){return $('adminToken').value.trim()}
+function requireAdminToken(statusId){if(!adminToken()){setStatus(statusId,'Enter the ADMIN_TOKEN first.','err');return false}return true}
+const adminApi=(path,opts={})=>api(path,{...opts,token:adminToken(),headers:{...(opts.body?{'Content-Type':'application/json'}:{}),...(opts.headers||{})}});
+let systemState=null,contribCursorStack=[null],contribPageIndex=0,contribNextCursor=null,currentPreview=null;
+const selectedContributions=new Set();
+
+async function loadAdmin(){
+  if(!requireAdminToken('adminStatus'))return;
+  const button=$('loadAdmin');button.disabled=true;
+  try{
+    systemState=await adminApi('/api/admin/system');
+    const lines=['Status source: '+(systemState.statusSource==='active'?'D1 (active)':'migration pending')];
+    if(systemState.migration)lines.push('Migration manifest: '+systemState.migration.state+(systemState.migration.activatedAt?' · activated '+systemState.migration.activatedAt:''));
+    setStatus('adminStatus',lines.join('\n'),'ok');
+    renderOpenPublication(systemState.openPublication);
+    const active=systemState.statusSource==='active';
+    $('migrationPanel').hidden=active;$('contributionsPanel').hidden=!active;$('publicationPanel').hidden=!active;$('auditPanel').hidden=false;
+    if(!active)await migrationReport();
+    else{contribCursorStack=[null];contribPageIndex=0;await loadContributions();await loadPublications()}
+    $('auditDate').value=dayToIso(utcToday());
+    await loadAudit();
+    await loadAdminUsers();
+  }catch(e){setStatus('adminStatus','Admin request failed: '+e.message,'err')}
+  finally{button.disabled=false}
+}
+
+function renderOpenPublication(p){
+  const b=$('openPublicationBanner');
+  if(!p){b.hidden=true;b.replaceChildren();return}
+  b.hidden=false;b.replaceChildren();
+  const t=document.createElement('div');
+  const abortable=p.state==='prepared';
+  const backupUnverified=typeof p.lastError==='string'&&p.lastError.startsWith('BACKUP_UNVERIFIED');
+  if(backupUnverified){
+    const w=document.createElement('p');w.className='status err';w.dataset.backupUnverified='1';
+    w.textContent='MANUAL CHECK REQUIRED: the backup of this publication could not be verified. The central ShipDB may already contain this publication, so it cannot be aborted or reset safely. Do not restore or republish until the journal (backup_key, backup_source_etag), the backup object and the central file metadata have been checked by hand. "Re-check" only repeats the verification; it never uses another backup object.';
+    b.append(w);
+  }
+  t.textContent='Publication '+p.publicationId+' is not finished (state: '+p.state+(p.runnerActive?', a run is active':'')+', attempts: '+p.attempts+(p.lastError?', last error: '+p.lastError:'')+'). '+(abortable?'Resume it to finish, or abort it (possible only before the write phase).':'The write phase has started: it can only be resumed, not aborted.');
+  const resume=document.createElement('button');resume.className='primary';resume.textContent=backupUnverified?'Re-check backup and resume':'Resume publication';
+  const abort=document.createElement('button');abort.className='danger';abort.textContent='Abort publication';
+  resume.onclick=async()=>{resume.disabled=true;try{const r=await adminApi('/api/admin/publication/resume',{method:'POST',body:JSON.stringify({publicationId:p.publicationId})});setStatus('publicationStatus','Publication '+r.publication.publicationId+': '+r.publication.state,'ok');await loadAdmin()}catch(e){setStatus('publicationStatus','Resume failed: '+e.message,'err')}finally{resume.disabled=false}};
+  abort.onclick=async()=>{if(!confirm('Abort publication '+p.publicationId+'? This is only possible if the central file was not written.'))return;abort.disabled=true;try{await adminApi('/api/admin/publication/abort',{method:'POST',body:JSON.stringify({publicationId:p.publicationId})});await loadAdmin()}catch(e){setStatus('publicationStatus','Abort failed: '+e.message,'err')}finally{abort.disabled=false}};
+  const row=document.createElement('div');row.className='apirow';row.append(resume);if(abortable)row.append(abort);
+  b.append(t,row);
+}
+
+// --- migration ---
+function renderMigration(report){
+  const lines=['Manifest: '+(report.manifest?report.manifest.state+(report.manifest.frozenAt?' (frozen '+report.manifest.frozenAt+')':''):'not created'),
+    'Legacy contributions: '+report.total+'   clean: '+report.clean+'   resolved: '+report.resolved+'   excluded: '+report.excluded+'   unresolved: '+report.unresolved+(report.unresolvedTimestamps?' (of which submission timestamps: '+report.unresolvedTimestamps+')':''),
+    'By legacy status: '+(report.byLegacyStatus.map(s=>s.status+' '+s.n).join(', ')||'-'),
+    'Import: '+report.import.matching+' of '+report.import.importable+' importable record(s) present and matching in D1'+(report.import.mismatches.length?' · '+report.import.mismatches.length+' mismatch(es)':''),
+    report.readyToActivate?'Ready to activate.':'Blockers:\n  '+report.blockers.join('\n  ')];
+  setStatus('migrationStatus',lines.join('\n'),report.readyToActivate?'ok':'warn');
+  const tb=$('migrationProblems');tb.replaceChildren();
+  for(const p of report.problems){
+    const tr=document.createElement('tr');
+    const td=t=>{const c=document.createElement('td');c.textContent=t;return c};
+    const dateInfo=p.submitted_at_problem?p.submitted_at_problem+' (raw: '+(p.legacy_submitted_at===null?'missing':JSON.stringify(p.legacy_submitted_at))+')':'';
+    const decision=p.excluded?'excluded':[p.resolved_status?'status '+p.resolved_status:'',p.resolved_submitted_at?'submitted '+p.resolved_submitted_at:''].filter(Boolean).join(' · ')||'—';
+    tr.append(td(p.contribution_id||p.metadata_key),td(p.legacy_status||'(missing)'),td([p.problem,dateInfo].filter(Boolean).join(' · ')),td(decision));
+    const act=document.createElement('td');
+    if(p.submitted_at_problem&&!p.resolved_submitted_at&&!p.excluded){
+      const inp=document.createElement('input');inp.type='text';inp.placeholder='2026-10-20T14:30:00Z';inp.setAttribute('aria-label','Submission timestamp (UTC) for '+(p.contribution_id||p.metadata_key));inp.size=22;
+      const setd=document.createElement('button');setd.className='subtle';setd.textContent='Set submission time';
+      setd.onclick=()=>migrationResolve(p.metadata_key,{action:'set_submitted_at',submittedAt:inp.value.trim()});
+      act.append(inp,' ',setd,' ');
+    }
+    if((p.problem==='UNKNOWN_STATUS'||p.problem==='MISSING_STATUS')&&!p.resolved_status&&!p.excluded){
+      const sel=document.createElement('select');for(const s of ['Pending','In Review','Accepted','Rejected','Published']){const o=document.createElement('option');o.textContent=s;sel.appendChild(o)}
+      const set=document.createElement('button');set.className='subtle';set.textContent='Set status';
+      set.onclick=()=>migrationResolve(p.metadata_key,{action:'set_status',status:sel.value});
+      act.append(sel,' ',set,' ');
+    }
+    const decided=p.excluded||p.resolved_status||p.resolved_submitted_at;
+    const ex=document.createElement('button');ex.className='subtle';ex.textContent=decided?'Reset decision':'Exclude';
+    ex.onclick=()=>migrationResolve(p.metadata_key,{action:decided?'reset':'exclude'});
+    act.append(ex);tr.append(act);tb.appendChild(tr);
+  }
+}
+async function migrationReport(){try{renderMigration((await adminApi('/api/admin/migration/report')).report)}catch(e){setStatus('migrationStatus','Report failed: '+e.message,'err')}}
+async function migrationDryRun(){
+  const b=$('migDryRun');b.disabled=true;
+  try{
+    let total=0,r;
+    do{r=await adminApi('/api/admin/migration/dry-run',{method:'POST',body:'{}'});total+=r.processed;setStatus('migrationStatus','Dry run: '+total+' metadata object(s) recorded…')}while(!r.done);
+    renderMigration(r.report);
+  }catch(e){setStatus('migrationStatus','Dry run failed: '+e.message,'err')}finally{b.disabled=false}
+}
+async function migrationResolve(metadataKey,body){try{renderMigration((await adminApi('/api/admin/migration/resolve',{method:'POST',body:JSON.stringify({metadataKey,...body})})).report)}catch(e){setStatus('migrationStatus','Decision failed: '+e.message,'err')}}
+async function migrationImport(){const b=$('migImport');b.disabled=true;try{const r=await adminApi('/api/admin/migration/import',{method:'POST',body:'{}'});renderMigration(r.report)}catch(e){setStatus('migrationStatus','Import failed: '+e.message,'err')}finally{b.disabled=false}}
+async function migrationActivate(){
+  const typed=prompt('Activating makes D1 the only contribution status source. This cannot be undone from this page.\nType ACTIVATE_D1_STATUS to confirm.');
+  if(typed!=='ACTIVATE_D1_STATUS')return;
+  try{await adminApi('/api/admin/migration/activate',{method:'POST',body:JSON.stringify({confirm:typed})});await loadAdmin()}
+  catch(e){setStatus('migrationStatus','Activation refused: '+e.message+(e.data&&e.data.blockers?'\n  '+e.data.blockers.join('\n  '):''),'err')}
+}
+
+// --- contributions ---
+async function loadContributions(){
+  const params=new URLSearchParams({limit:'50',upload:$('contribUploadFilter').value});
+  if($('contribStatusFilter').value)params.set('status',$('contribStatusFilter').value);
+  const cursor=contribCursorStack[contribPageIndex];if(cursor)params.set('cursor',cursor);
+  try{
+    const data=await adminApi('/api/admin/contributions?'+params);
+    contribNextCursor=data.nextCursor;
+    const counts={};for(const c of data.counts||[])if(c.upload_state==='complete')counts[c.status]=(counts[c.status]||0)+c.n;
+    const staged=(data.counts||[]).filter(c=>c.upload_state==='staged').reduce((a,c)=>a+c.n,0);
+    $('contribCounts').textContent=Object.entries(counts).map(([k,v])=>k+' '+v).join(' · ')+(staged?' · staged '+staged:'');
+    renderContributions(data.contributions);
+    $('contribPage').textContent='Page '+(contribPageIndex+1);
+    $('contribPrev').disabled=contribPageIndex===0;$('contribNext').disabled=!contribNextCursor;
+  }catch(e){setStatus('adminStatus','Could not load contributions: '+e.message,'err')}
+}
+function renderContributions(items){
+  const tb=$('adminList');tb.replaceChildren();
+  if(!items.length){const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=7;td.textContent='No contributions match the filter.';tr.appendChild(td);tb.appendChild(tr);return}
+  for(const item of items){
+    const tr=document.createElement('tr');
+    const cell=(t)=>{const c=document.createElement('td');if(t!==undefined)c.textContent=t;return c};
+    const sel=cell();
+    if(item.status==='Accepted'&&item.uploadState==='complete'){
+      const cb=document.createElement('input');cb.type='checkbox';cb.checked=selectedContributions.has(item.id);cb.setAttribute('aria-label','Select '+item.id);
+      cb.onchange=()=>{cb.checked?selectedContributions.add(item.id):selectedContributions.delete(item.id);updateSelection()};sel.appendChild(cb);
+    }
+    const idCell=cell(item.id);if(item.origin==='legacy'){const s=document.createElement('div');s.className='small';s.textContent='legacy';idCell.appendChild(s)}
+    tr.append(sel,idCell,cell((item.submittedAt||'').replace('T',' ').slice(0,19)),cell(item.submittedByLabel||'Legacy / unknown'),cell(item.rowCount??'?'));
+    const st=cell();const actions=cell();
+    if(item.uploadState!=='complete'){
+      st.textContent=item.uploadState.toUpperCase();
+      if(item.uploadState==='staged'){const b=document.createElement('button');b.className='subtle';b.textContent='Reconcile upload';b.onclick=async()=>{try{const r=await adminApi('/api/admin/contributions/'+item.id+'/reconcile-upload',{method:'POST',body:'{}'});setStatus('adminStatus','Upload '+item.id+': '+r.result,'ok');await loadContributions()}catch(e){setStatus('adminStatus','Reconcile failed: '+e.message,'err')}};actions.appendChild(b)}
+    }else if(item.status==='Published'){
+      st.textContent='Published';if(item.publishedByPublicationId){const s=document.createElement('div');s.className='small';s.textContent=item.publishedByPublicationId;st.appendChild(s)}
+    }else{
+      const s=document.createElement('select');for(const v of ['Pending','In Review','Accepted','Rejected']){const o=document.createElement('option');o.textContent=v;s.appendChild(o)}s.value=item.status;
+      const save=document.createElement('button');save.className='subtle';save.textContent='Save';
+      save.onclick=async()=>{save.disabled=true;try{const r=await adminApi('/api/admin/contributions/'+item.id+'/status',{method:'POST',body:JSON.stringify({status:s.value,expectedStatus:item.status})});if(r.contribution.status!=='Accepted')selectedContributions.delete(item.id);setStatus('adminStatus','Contribution '+item.id+' is now '+r.contribution.status+'.','ok');await loadContributions();updateSelection()}catch(e){setStatus('adminStatus','Could not update status: '+e.message,'err')}finally{save.disabled=false}};
+      st.append(s,' ',save);
+    }
+    const dl=document.createElement('button');dl.className='subtle';dl.textContent='Download CSV';
+    dl.onclick=async()=>{dl.disabled=true;try{const r=await fetch(API_BASE+'/api/admin/contributions/'+item.id,{headers:{Authorization:'Bearer '+adminToken()}});if(!r.ok){const t=await r.text();let d=null;try{d=JSON.parse(t)}catch{}throw Error(describeError(r.status,d,t))}const blob=await r.blob(),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='contribution-'+item.id+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}catch(e){setStatus('adminStatus','Download failed: '+(e.message||'network error'),'err')}finally{dl.disabled=false}};
+    actions.appendChild(dl);
+    tr.append(st,actions);tb.appendChild(tr);
+  }
+}
+function updateSelection(){$('pubSelection').textContent=selectedContributions.size+' selected'}
+
+// --- publication ---
+async function createPreview(){
+  if(!selectedContributions.size){setStatus('publicationStatus','Select at least one Accepted contribution.','warn');return}
+  const b=$('pubPreview');b.disabled=true;currentPreview=null;$('pubCommit').disabled=true;$('publicationConflictBody').replaceChildren();
+  setStatus('publicationStatus','Creating preview…');
+  try{
+    const p=await adminApi('/api/admin/publication/preview',{method:'POST',body:JSON.stringify({contributionIds:[...selectedContributions]})});
+    currentPreview={...p,decisions:{}};
+    const s=p.summary;
+    setStatus('publicationStatus','Preview '+p.previewId+' (valid until '+p.expiresAt.replace('T',' ').slice(0,19)+' UTC)\nContributions: '+s.contributions+'   MMSIs: '+s.mmsis+'\nNew MMSIs: '+s.addedMmsis+'   fields to fill: '+s.filledFields+'   unchanged: '+s.unchangedRows+'\nConflicts needing a decision: '+s.conflicts,'ok');
+    renderConflicts();
+  }catch(e){setStatus('publicationStatus','Preview failed: '+e.message+(e.data&&e.data.problems?'\n  '+e.data.problems.slice(0,20).map(x=>x.id+': '+x.problem).join('\n  '):''),'err')}
+  finally{b.disabled=false}
+}
+function renderConflicts(){
+  const tb=$('publicationConflictBody');tb.replaceChildren();
+  const conflicts=currentPreview.conflicts;
+  for(const cf of conflicts.slice(0,2000)){
+    const tr=document.createElement('tr');const td=t=>{const c=document.createElement('td');c.textContent=t;return c};
+    tr.append(td(cf.mmsi+(cf.newMmsi?' (new)':'')),td(cf.field),td(cf.current===''?'(empty)':cf.current+(cf.currentValid?'':' (invalid)')));
+    const dc=document.createElement('td');const sel=document.createElement('select');sel.setAttribute('aria-label','Decision for '+cf.id);
+    const none=document.createElement('option');none.value='';none.textContent='— choose —';sel.appendChild(none);
+    for(const o of cf.options){const op=document.createElement('option');op.value=o.choice;op.textContent=o.choice==='keep'?'Keep current value':'Use '+o.value+' ('+o.contributions.length+' contribution'+(o.contributions.length===1?'':'s')+')';sel.appendChild(op)}
+    sel.onchange=()=>{if(sel.value)currentPreview.decisions[cf.id]=sel.value;else delete currentPreview.decisions[cf.id];updateDecisionInfo()};
+    dc.appendChild(sel);tr.appendChild(dc);tb.appendChild(tr);
+  }
+  updateDecisionInfo();
+}
+function updateDecisionInfo(){
+  if(!currentPreview){$('pubCommit').disabled=true;return}
+  const n=currentPreview.conflicts.length,d=Object.keys(currentPreview.decisions).length;
+  $('pubDecisionInfo').textContent=n?d+' of '+n+' conflicts decided':'No conflicts.';
+  $('pubCommit').disabled=d!==n;
+}
+async function commitPreview(){
+  if(!currentPreview)return;
+  if(!confirm('Publish preview '+currentPreview.previewId+' to the central database?'))return;
+  const b=$('pubCommit');b.disabled=true;setStatus('publicationStatus','Publishing…');
+  try{
+    const r=await adminApi('/api/admin/publication/commit',{method:'POST',body:JSON.stringify({previewId:currentPreview.previewId,decisions:currentPreview.decisions})});
+    const p=r.publication;
+    setStatus('publicationStatus','Publication '+p.publicationId+': '+p.state+'\nBackup: '+(p.backupKey||'-')+'\nCentral ETag: '+(p.resultEtag||'-')+(p.summary?'\nNew MMSIs: '+p.summary.addedMmsis+'   filled fields: '+p.summary.filledFields+'   replaced fields: '+p.summary.replacedFields:''),'ok');
+    currentPreview=null;selectedContributions.clear();updateSelection();$('publicationConflictBody').replaceChildren();
+    await loadAdmin();
+  }catch(e){
+    let msg='Publication failed: '+e.message;
+    if(e.status===409&&['CORE_CHANGED','CONFLICTS_CHANGED','CONTRIBUTIONS_CHANGED','PREVIEW_INVALIDATED'].includes(e.data.code))msg+='\nThe preview is outdated. Create a new preview.';
+    if(e.status===410)msg+='\nCreate a new preview.';
+    if(e.data&&e.data.publicationId)msg+='\nPublication '+e.data.publicationId+' can be resumed from the banner above.';
+    setStatus('publicationStatus',msg,'err');
+    if(e.status>=409)await loadAdmin().catch(()=>{});
+  }finally{updateDecisionInfo()}
+}
+async function loadPublications(){
+  try{
+    const data=await adminApi('/api/admin/publications?limit=10');
+    const tb=$('publicationList');tb.replaceChildren();
+    for(const p of data.publications){
+      const tr=document.createElement('tr');const td=t=>{const c=document.createElement('td');c.textContent=t;return c};
+      tr.append(td(p.publicationId),td(p.state),td((p.createdAt||'').replace('T',' ').slice(0,19)),td(p.backupKey||'-'),td(p.summary?('new '+p.summary.addedMmsis+', filled '+p.summary.filledFields+', replaced '+p.summary.replacedFields):(p.lastError||'-')));
+      tb.appendChild(tr);
+    }
+  }catch(e){setStatus('publicationStatus','Could not load publications: '+e.message,'err')}
+}
+
+// --- audit ---
+async function loadAudit(){
+  try{
+    const data=await adminApi('/api/admin/last-seen?date='+encodeURIComponent($('auditDate').value||dayToIso(utcToday())));
+    const td=t=>{const c=document.createElement('td');c.textContent=t;return c};
+    const daily=$('auditDaily');daily.replaceChildren();
+    for(const d of data.daily){const tr=document.createElement('tr');tr.append(td(d.label||d.user_id),td(d.updated_count+' / '+data.limit),td(d.updated_at));daily.appendChild(tr)}
+    const list=$('auditList');list.replaceChildren();
+    for(const a of data.audit){const tr=document.createElement('tr');tr.append(td(a.requested_at.replace('T',' ').slice(0,19)),td(a.user_label||a.user_id),td(a.result_code+' ('+a.http_status+')'),td(a.received),td(a.updated),td(a.unchanged),td(a.mismatched),td(a.not_found),td(a.rejected+a.duplicate_input),td(a.rate_limited));list.appendChild(tr)}
+  }catch(e){setStatus('adminStatus','Could not load the last-seen audit: '+e.message,'err')}
+}
+
+// --- user tokens ---
+function showOneTimeUserToken(data,action){
+  const box=$('userTokenResult');box.hidden=false;box.className='status ok';box.replaceChildren();
+  const heading=document.createElement('strong');heading.textContent=action+' — copy this token now';
+  const note=document.createElement('p');note.textContent='The raw token cannot be retrieved later. Save it securely and send it privately to the intended user.';
+  const field=document.createElement('input');field.type='text';field.readOnly=true;field.autocomplete='off';field.value=data.token;field.setAttribute('aria-label','New personal access token');field.style.width='100%';field.style.margin='8px 0';
+  const copy=document.createElement('button');copy.textContent='Copy token';
+  copy.onclick=async()=>{try{await navigator.clipboard.writeText(data.token);copy.textContent='Copied'}catch{field.focus();field.select();copy.textContent='Select and copy the token'}};
+  box.append(heading,note,field,copy);
+}
+async function loadAdminUsers(){
+  if(!requireAdminToken('userTokenAdminStatus'))return;
+  const button=$('loadUserTokens');button.disabled=true;$('userTokenList').replaceChildren();
+  try{
+    const data=await adminApi('/api/admin/users');const users=data.users||[];
+    setStatus('userTokenAdminStatus','Loaded '+users.length+' user token record(s). Raw tokens are never listed.','ok');
+    if(!users.length){$('userTokenList').textContent='No user tokens have been created yet.';return}
+    for(const user of users){
+      const card=document.createElement('div');card.className='adminitem';
+      const title=document.createElement('strong');title.textContent=user.label;
+      const meta=document.createElement('div');meta.className='adminmeta';
+      meta.textContent=(user.active?'ACTIVE':'REVOKED')+' · Created: '+(user.createdAt||'unknown')+' · Last used: '+(user.lastUsedAt||'never')+(user.revokedAt?' · Revoked: '+user.revokedAt:'');
+      const controls=document.createElement('div');controls.className='apirow';
+      if(user.active){
+        const rotate=document.createElement('button');rotate.textContent='Rotate token';
+        rotate.onclick=()=>userAction(user,'rotate','Rotate the token for "'+user.label+'"? The previous token stops working immediately.',rotate);
+        const revoke=document.createElement('button');revoke.textContent='Revoke token';
+        revoke.onclick=()=>userAction(user,'revoke','Revoke the token for "'+user.label+'"? This user loses access immediately.',revoke);
+        controls.append(rotate,revoke);
+      }else{
+        const re=document.createElement('button');re.textContent='Reactivate and rotate';re.className='danger';
+        re.onclick=()=>userAction(user,'reactivate','Reactivate "'+user.label+'" with a NEW token? The user regains access with the new token only.',re);
+        controls.append(re);
+      }
+      card.append(title,meta,controls);$('userTokenList').appendChild(card);
+    }
+  }catch(e){setStatus('userTokenAdminStatus','User-token request failed: '+e.message,'err')}
+  finally{button.disabled=false}
+}
+async function userAction(user,action,question,button){
+  if(!confirm(question))return;button.disabled=true;
+  try{
+    const data=await adminApi('/api/admin/users/'+encodeURIComponent(user.id)+'/'+action,{method:'POST',body:action==='reactivate'?JSON.stringify({confirm:true}):'{}'});
+    if(data.token)showOneTimeUserToken(data,(action==='reactivate'?'Reactivated: new token for ':'New token for ')+user.label);
+    await loadAdminUsers();
+    if(action==='revoke')setStatus('userTokenAdminStatus','Access revoked for '+user.label+'. Existing contributions remain in the review queue.','ok');
+  }catch(e){setStatus('userTokenAdminStatus','Could not '+action+' the token: '+e.message,'err')}
+  finally{button.disabled=false}
+}
+async function createUserToken(){
+  if(!requireAdminToken('userTokenAdminStatus'))return;
+  const label=$('newUserLabel').value.trim();
+  if(!label){setStatus('userTokenAdminStatus','Enter a user label first.','err');return}
+  const button=$('createUserToken');button.disabled=true;setStatus('userTokenAdminStatus','Creating user token…');
+  try{
+    const data=await adminApi('/api/admin/users',{method:'POST',body:JSON.stringify({label})});
+    $('newUserLabel').value='';showOneTimeUserToken(data,'New token for '+data.user.label);
+    await loadAdminUsers();setStatus('userTokenAdminStatus','User token created. Copy and securely store it before navigating away.','ok');
+  }catch(e){setStatus('userTokenAdminStatus','Could not create user token: '+e.message,'err')}
+  finally{button.disabled=false}
+}
+
+$('loadAdmin').addEventListener('click',loadAdmin);
+$('adminToken').addEventListener('keydown',e=>{if(e.key==='Enter')loadAdmin()});
+$('migDryRun').addEventListener('click',migrationDryRun);
+$('migReport').addEventListener('click',migrationReport);
+$('migImport').addEventListener('click',migrationImport);
+$('migActivate').addEventListener('click',migrationActivate);
+$('contribReload').addEventListener('click',()=>{contribCursorStack=[null];contribPageIndex=0;loadContributions()});
+$('contribStatusFilter').addEventListener('change',()=>{contribCursorStack=[null];contribPageIndex=0;loadContributions()});
+$('contribUploadFilter').addEventListener('change',()=>{contribCursorStack=[null];contribPageIndex=0;loadContributions()});
+$('contribNext').addEventListener('click',()=>{if(!contribNextCursor)return;contribCursorStack[contribPageIndex+1]=contribNextCursor;contribPageIndex++;loadContributions()});
+$('contribPrev').addEventListener('click',()=>{if(contribPageIndex>0){contribPageIndex--;loadContributions()}});
+$('pubPreview').addEventListener('click',createPreview);
+$('pubCommit').addEventListener('click',commitPreview);
+$('auditLoad').addEventListener('click',loadAudit);
+$('loadUserTokens').addEventListener('click',loadAdminUsers);
+$('createUserToken').addEventListener('click',createUserToken);
+</script>
+</body>
+</html>
