@@ -9,61 +9,63 @@
 :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#e8edf5;background:#0b1220}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at 15% 0%,#172a43,transparent 42%),#0b1220;min-height:100vh}
-main{max-width:1100px;margin:auto;padding:36px 20px}
+main{max-width:1150px;margin:auto;padding:36px 20px}
 h1{font-size:clamp(2rem,5vw,3rem);margin:8px 0}h1 span{color:#7dd3fc}
+h3{margin-top:26px}
 .muted{color:#9fb0c6;line-height:1.6}
 .panel{background:#111b2c;border:1px solid #2c3a50;border-radius:14px;padding:20px;margin:18px 0}
+.subpanel{border:1px solid #26364d;border-radius:10px;padding:14px;margin:14px 0;background:#0e1828}
 .eyebrow{color:#7dd3fc;text-transform:uppercase;letter-spacing:.15em;font-size:.75rem;font-weight:700}
 button{background:#1a2b42;border:1px solid #3c506c;color:#eef7ff;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
 button.primary{background:#0284c7;border-color:#0ea5e9}
+button.danger{background:#7f1d1d;border-color:#b91c1c}
+button.subtle{padding:7px 10px;background:#132238}
 button:disabled{opacity:.45;cursor:not-allowed}
 input[type=file]{display:block;margin-top:12px;max-width:100%}
-input[type=password]{flex:1;min-width:220px;background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:8px;padding:10px}
+input[type=password],input[type=text],input[type=date],select{background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:8px;padding:9px}
+input[type=password]{flex:1;min-width:220px}
 .status{padding:12px;background:#0b1728;border-radius:8px;white-space:pre-wrap;line-height:1.5;margin-top:12px}
-.ok{color:#bbf7d0}.err{color:#fecaca}
+.ok{color:#bbf7d0}.err{color:#fecaca}.warn{color:#fde68a}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .stat{background:#0b1728;padding:14px;border:1px solid #26364d;border-radius:9px}
 .stat b{display:block;font-size:1.5rem}.stat span{font-size:.8rem;color:#9fb0c6}
-.tablewrap{overflow:auto;max-height:420px;margin-top:14px}
+.tablewrap{overflow:auto;max-height:460px;margin-top:10px}
 table{border-collapse:collapse;width:100%;font-size:.82rem;white-space:nowrap}
-td,th{text-align:left;padding:9px;border-bottom:1px solid #2b3a50}th{position:sticky;top:0;background:#17253a}
+td,th{text-align:left;padding:8px;border-bottom:1px solid #2b3a50;vertical-align:top}th{position:sticky;top:0;background:#17253a;z-index:1}
 th .sort-button{display:inline-flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:4px;padding:2px;color:inherit;font:inherit;font-weight:700;text-align:left;white-space:nowrap}
 th .sort-button:hover,th .sort-button:focus-visible{color:#7dd3fc;outline:1px solid #38bdf8;outline-offset:3px}
 .sort-indicator{display:inline-block;min-width:9px;color:#7dd3fc;font-size:.75rem}
-.validity-pill{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.02em;padding:4px 8px;border-radius:20px}.validity-valid{background:#064e3b;color:#a7f3d0}.validity-invalid{background:#7f1d1d;color:#fecaca}.validity-none{background:#243449;color:#cbd5e1}
-.table-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 8px}
-.table-tools input[type=search]{flex:1;min-width:240px;background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:8px;padding:11px 12px}
-.table-tools .small{margin-left:auto}
-button.subtle{padding:8px 11px;background:#132238}
-.actions,.apirow{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
-.pill{font-size:.7rem;padding:3px 7px;border-radius:20px}.new{background:#064e3b;color:#a7f3d0}.changed{background:#713f12;color:#fde68a}.same{background:#243449;color:#cbd5e1}
-.options{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0}.options label{font-size:.9rem}
-.small{font-size:.8rem;color:#9fb0c6}.skipped{background:#351a20;border:1px solid #6b2934;color:#fecaca}
-.adminitem{border:1px solid #2b3a50;border-radius:8px;padding:12px;margin:10px 0;background:#0b1728}
-.adminitem select{background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:6px;padding:8px}
-.adminmeta{color:#9fb0c6;font-size:.8rem;line-height:1.5;margin:6px 0}
+.pill{display:inline-block;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:20px;background:#243449;color:#cbd5e1}
+.p-new,.p-valid,.p-sync{background:#064e3b;color:#a7f3d0}.p-conflict,.p-warn{background:#713f12;color:#fde68a}.p-invalid{background:#7f1d1d;color:#fecaca}.p-fill{background:#1e3a8a;color:#bfdbfe}
+.table-tools,.actions,.apirow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.table-tools input[type=search]{flex:1;min-width:240px;background:#0b1728;color:#eef7ff;border:1px solid #3c506c;border-radius:8px;padding:10px 12px}
+.options{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0}.options label{font-size:.9rem}
+.small{font-size:.8rem;color:#9fb0c6}
+.stale{outline:2px solid #b45309;outline-offset:4px}
 code{color:#bae6fd}
-@media(max-width:650px){main{padding:20px 12px}.stats{grid-template-columns:repeat(2,1fr)}.panel{padding:15px}}
+@media(max-width:650px){main{padding:20px 12px}.panel{padding:15px}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <main>
 <div class="eyebrow">XPAISTraffic · Community contribution</div>
 <h1>ShipDB <span>Merger</span></h1>
-<p class="muted">Compare your personal ShipDB against the central repository database. Download an updated personal copy and a separate contribution file for review. Only the generated contribution CSV is uploaded if you choose to submit it; your full personal database is not uploaded.</p>
+<p class="muted">Compare your personal ShipDB with the central ShipDB. You can download an updated personal copy, submit new or missing vessel data for manual review, and synchronize the <code>last_seen_utc</code> dates of vessels whose data already matches. Your full personal database is never uploaded.</p>
 
 <section class="panel">
 <h2>1. Central database</h2>
-<p class="muted">The central <code>ship_db.csv</code> is stored in private storage. Access is restricted to approved VesselPack owners, each using an individual access token. Request your token by private message on X-Plane.org or through my Ko-fi Shop. Store it securely (e.g. in KeePass); do not share it. Tokens cannot be retrieved later! This page does not save your token.</p>
+<p class="muted">The central <code>ship_db.csv</code> is stored in private Cloudflare R2 storage; this page (GitHub Pages) only hosts the merger. Access is restricted to approved VesselPack owners, each using an individual access token. Request your token by private message on X-Plane.org or through my Ko-fi Shop. Store it securely (e.g. in KeePass) and do not share it. Tokens cannot be retrieved later. This page does not save your token.</p>
 <div class="apirow"><input id="userToken" type="password" autocomplete="off" placeholder="Your personal access token (not saved)" aria-label="Personal access token"><button id="loadCentralBtn" class="primary">Load central database</button></div>
 <div id="centralStatus" class="status">Enter your personal access token to load the central database.</div>
+
 <h2 style="margin-top:22px">2. Your database</h2>
-<p class="muted">Select your local <code>ship_db.csv</code>. It is read locally in your browser.</p>
+<p class="muted">Select your local <code>ship_db.csv</code> (from the plugin's <code>ShipDB</code> folder). It is read locally in your browser.</p>
 <input id="userFile" type="file" accept=".csv,text/csv">
 <div class="options">
-<label><input id="fillBlanks" type="checkbox" checked> Fill missing values in either database where safe</label>
-<label><input id="replaceCentral" type="checkbox"> Include conflicting non-empty values in contribution for manual review</label>
+<label><input id="fillBlanks" type="checkbox" checked> Fill missing central values in my personal merged copy</label>
+<label><input id="replaceCentral" type="checkbox"> Include my differing values (conflicts) in the contribution for manual review</label>
 </div>
+<p class="small">Changing an option recalculates the comparison. The contribution never depends on the first option.</p>
 <div class="actions">
 <button id="compareBtn" class="primary" disabled>Compare with central DB</button>
 <button id="resetBtn">Reset</button>
@@ -73,16 +75,22 @@ code{color:#bae6fd}
 
 <section class="panel" id="results" hidden>
 <h2>3. Comparison results</h2>
-<p class="muted">New MMSIs and missing values are detected separately. The merged personal CSV includes both databases' rows. The contribution CSV contains only information absent from the central DB; conflicting values are excluded unless you explicitly include them for review. The Contribution validity column shows VALID for a candidate that passes all required checks, INVALID if the source record or proposed contribution fails validation, and NOT INCLUDED when a valid record adds no new information to the current central database.</p>
+<p class="muted">Core vessel data (<code>ship_type</code>, <code>length_m</code>, <code>beam_m</code>) changes only through manual contribution review. <code>last_seen_utc</code> is not part of a contribution: when all core values of a vessel match the central record and your date is newer, the date can be synchronized automatically. A <code>ship_type</code> of 0 or an empty/invalid value counts as missing. New MMSIs get their central entry only after review and publication; your local date for them is synchronized on a later comparison.</p>
 <div class="stats">
 <div class="stat"><b id="centralCount">0</b><span>Central rows</span></div>
 <div class="stat"><b id="userCount">0</b><span>Your rows</span></div>
 <div class="stat"><b id="newCount">0</b><span>New MMSIs from you</span></div>
-<div class="stat"><b id="fillCount">0</b><span>Missing central fields</span></div>
+<div class="stat"><b id="fillCount">0</b><span>Missing central fields you can fill</span></div>
+<div class="stat"><b id="conflictCount">0</b><span>Conflicting values</span></div>
 <div class="stat"><b id="eligibleCount">0</b><span>Valid contribution records</span></div>
 <div class="stat"><b id="skippedCount">0</b><span>Skipped: invalid/incomplete</span></div>
+<div class="stat"><b id="syncCount">0</b><span>Last-seen dates to synchronize</span></div>
 </div>
-<div class="options"><label><input id="hideSame" type="checkbox" checked> Hide unchanged rows</label></div>
+
+<div class="options">
+<label><input id="hideSame" type="checkbox" checked> Hide unchanged rows</label>
+<label><input id="showCentralOnly" type="checkbox"> Show central-only rows</label>
+</div>
 <div class="table-tools">
 <input id="tableSearch" type="search" placeholder="Search MMSI, finding, ship type, LOA, beam or date…" aria-label="Search comparison results">
 <button id="clearTableSearch" class="subtle" type="button">Clear</button>
@@ -92,87 +100,50 @@ code{color:#bae6fd}
 <table><thead><tr>
 <th aria-sort="ascending"><button class="sort-button" type="button" data-sort="mmsi">MMSI <span class="sort-indicator" aria-hidden="true">▲</span></button></th>
 <th aria-sort="none"><button class="sort-button" type="button" data-sort="status">Finding <span class="sort-indicator" aria-hidden="true"></span></button></th>
-<th aria-sort="none"><button class="sort-button" type="button" data-sort="contributionValidity">Contribution validity <span class="sort-indicator" aria-hidden="true"></span></button></th>
+<th aria-sort="none"><button class="sort-button" type="button" data-sort="contributionValidity">Contribution <span class="sort-indicator" aria-hidden="true"></span></button></th>
+<th aria-sort="none"><button class="sort-button" type="button" data-sort="syncState">Last-seen sync <span class="sort-indicator" aria-hidden="true"></span></button></th>
 <th aria-sort="none"><button class="sort-button" type="button" data-sort="ship_type">ship_type <span class="sort-indicator" aria-hidden="true"></span></button></th>
 <th aria-sort="none"><button class="sort-button" type="button" data-sort="length_m">length_m <span class="sort-indicator" aria-hidden="true"></span></button></th>
 <th aria-sort="none"><button class="sort-button" type="button" data-sort="beam_m">beam_m <span class="sort-indicator" aria-hidden="true"></span></button></th>
 <th aria-sort="none"><button class="sort-button" type="button" data-sort="last_seen_utc">last_seen_utc <span class="sort-indicator" aria-hidden="true"></span></button></th>
 </tr></thead><tbody id="tbody"></tbody></table>
 </div>
+<div class="table-tools">
+<button id="pagePrev" class="subtle" type="button">◀ Previous</button>
+<span id="pageInfo" class="small"></span>
+<button id="pageNext" class="subtle" type="button">Next ▶</button>
+</div>
 <p id="tableHint" class="small"></p>
+
 <div class="actions">
 <button class="primary" id="downloadMerged">Download merged personal ship_db.csv</button>
-<button id="downloadContribution">Download contribution for review</button>
+<button id="downloadContribution">Download contribution CSV</button>
 </div>
-<div class="apirow">
-<button class="primary" id="uploadContribution">Upload contribution for review</button>
-<span class="small">Uploads only the generated contribution CSV to the private review queue.</span>
-</div>
-<div id="uploadStatus" class="status">Upload is optional. Compare first, then upload your contribution for review.</div>
 <div id="exportStatus" class="status">Review the comparison before exporting.</div>
+
+<div class="subpanel">
+<h3 style="margin-top:0">Synchronize last-seen dates</h3>
+<p class="small">Sends only MMSI, the three core values and your date for vessels whose core data matches the central record exactly. The central file is updated immediately; nothing else is changed. Daily limit per user: 10,000 executed updates.</p>
+<div class="apirow"><button class="primary" id="syncLastSeen">Synchronize last-seen dates</button></div>
+<div id="syncStatus" class="status">Compare first.</div>
+</div>
+
+<div class="subpanel">
+<h3 style="margin-top:0">Submit contribution for review</h3>
+<p class="small">Uploads only the contribution CSV (<code>mmsi,ship_type,length_m,beam_m</code>) to the private review queue. It does not change the central database until it is reviewed and published. Repeating an upload of the same content does not create a second submission.</p>
+<div class="apirow"><button class="primary" id="uploadContribution">Upload contribution for review</button></div>
+<div id="uploadStatus" class="status">Compare first.</div>
+</div>
+
 <h3>Skipped contribution records</h3>
-<p class="muted">Only records with a valid 9-digit MMSI, AIS Type, LOA and BEAM can be included in the contribution CSV. Skipped records remain visible here with the reason and are not exported.</p>
+<p class="muted">Only records with a 9-digit MMSI, an AIS type 1–99 and a LOA and beam greater than 0 can be contributed. Skipped records are listed with the reason and are not exported.</p>
 <div class="tablewrap">
-<table><thead><tr><th>MMSI</th><th>Reason skipped</th><th>AIS Type</th><th>LOA</th><th>BEAM</th></tr></thead><tbody id="skippedBody"></tbody></table>
+<table><thead><tr><th>MMSI</th><th>Reason skipped</th><th>AIS type</th><th>LOA</th><th>Beam</th></tr></thead><tbody id="skippedBody"></tbody></table>
 </div>
 <p id="skippedHint" class="small"></p>
-<p class="small">Contributions are submitted to a separate review queue. They do not change the published central database. Do not upload your full personal database.</p>
 </section>
 
-<section class="panel">
-<h2>4. Contribution review (admin)</h2>
-<p class="muted">For the repository maintainer only.</p>
-<div class="apirow">
-<input id="adminToken" type="password" autocomplete="off" placeholder="ADMIN_TOKEN (not saved)">
-<button class="primary" id="loadAdmin">Load contributions</button>
-</div>
-<div id="adminStatus" class="status">Admin access has not been requested.</div> 
-<hr style="border:0;border-top:1px solid #2c3a50;margin:22px 0">
-
-<h3>User access tokens</h3>
-<p class="muted">
-  Create access tokens for interested VesselPack owners.
-  </p>
-
-<div class="apirow">
-  <input
-    id="newUserLabel"
-    type="text"
-    maxlength="100"
-    autocomplete="off"
-    placeholder="User label (e.g. X-Plane.org username)"
-    aria-label="New user label"
-  >
-  <button class="primary" id="createUserToken">Create user token</button>
-  <button id="loadUserTokens">Refresh user list</button>
-</div>
-
-<div id="userTokenAdminStatus" class="status">
-  User-token management has not been requested.
-</div>
-
-<div id="userTokenResult" class="status" hidden></div>
-<div id="userTokenList"></div>
-<div id="adminList"></div>
-<hr style="border:0;border-top:1px solid #2c3a50;margin:22px 0">
-<h3>5. Prepare weekly ShipDB update</h3>
-<p class="muted">Builds a local publication candidate using only contributions with status <code>Accepted</code>. Contributions marked <code>Published</code> are excluded because they should already be in the central database. This step does not write to GitHub.</p>
-<div class="options">
-<label><input id="replaceConflicts" type="checkbox"> Replace conflicting non-empty values after manual review</label>
-</div>
-<div class="actions">
-<button class="primary" id="preparePublication">Prepare accepted contributions</button>
-<button id="downloadCandidate" disabled>Download candidate ship_db.csv</button>
-</div>
-<div id="publicationStatus" class="status">No publication candidate has been prepared.</div>
-<h4>Conflicting values found</h4>
-<p class="muted">By default, existing non-empty central values are preserved. The list below shows differing proposed values from accepted contributions.</p>
-<div class="tablewrap">
-<table><thead><tr><th>Contribution</th><th>MMSI</th><th>Field</th><th>Current value</th><th>Proposed value</th><th>Action</th></tr></thead><tbody id="publicationConflictBody"></tbody></table>
-</div>
-<p id="publicationConflictHint" class="small"></p>
-</section>
-<footer class="small">CSV comparison runs in your browser. Uploads are stored separately in a private review queue. The central ship_db.csv is not modified automatically.</footer>
+<footer class="small">The comparison runs in your browser. Core vessel data changes only through manual contribution review and publication; matching last_seen_utc values can be synchronized automatically. The central ship_db.csv is stored in private Cloudflare R2 storage.</footer>
 </main>
 
 <script>
@@ -180,694 +151,418 @@ code{color:#bae6fd}
 const API_BASE='https://xpais-shipdb-api.ignobilis-4370.workers.dev';
 const $=id=>document.getElementById(id);
 const FIELDS=['mmsi','ship_type','length_m','beam_m','last_seen_utc'];
-let centralRows=[],userRows=[],centralComments=[],centralHeaders=FIELDS,results=[],centralReady=false,skippedContributions=[];let publicationCandidateRows=null,publicationComments=[],publicationConflicts=[];
-let tableSort={key:'mmsi',direction:1};
-let tableSearch='';
+const CORE_FIELDS=['mmsi','ship_type','length_m','beam_m'];
+const VALUE_FIELDS=['ship_type','length_m','beam_m'];
+const LIMITS={uploadRows:10000,uploadBytes:2*1024*1024,syncUpdates:10000,syncBytes:2*1024*1024};
+const PAGE_SIZE=200;
 
-function parseRecords(text){
-  const records=[];let row=[],field='',quoted=false;
-  for(let i=0;i<text.length;i++){
-    const c=text[i];
-    if(quoted){
-      if(c==='"'&&text[i+1]==='"'){field+='"';i++}
-      else if(c==='"')quoted=false;
-      else field+=c;
-    }else if(c==='"'&&field==='')quoted=true;
-    else if(c===','){row.push(field);field=''}
-    else if(c==='\n'||c==='\r'){
-      if(c==='\r'&&text[i+1]==='\n')i++;
-      row.push(field);records.push(row);row=[];field='';
-    }else field+=c;
-  }
-  if(quoted)throw Error('CSV contains an unclosed quotation mark.');
-  if(field!==''||row.length){row.push(field);records.push(row)}
-  return records;
-}
-function parseCSV(text){
-  text=text.replace(/^\uFEFF/,'');
-  let lines=text.split(/\r?\n/).filter(x=>x.trim()!=='');
-  const comments=[];
-  while(lines.length&&lines[0].trim().startsWith('#'))comments.push(lines.shift());
-  if(!lines.length)throw Error('No CSV header row found.');
-  const rec=parseRecords(lines.join('\n'));
-  const headers=rec.shift().map(x=>x.trim().toLowerCase());
-  if(!headers.includes('mmsi'))throw Error('Required column "mmsi" is missing.');
-  if(new Set(headers).size!==headers.length)throw Error('CSV contains duplicate column names.');
-  const rows=[],seen=new Set();
-  for(let i=0;i<rec.length;i++){
-    if(rec[i].every(v=>!v.trim()))continue;
-    if(rec[i].length!==headers.length)throw Error('CSV row '+(i+2)+' has '+rec[i].length+' columns; expected '+headers.length+'.');
-    const r={};
-    FIELDS.forEach(f=>r[f]=headers.includes(f)?(rec[i][headers.indexOf(f)]||'').trim():'');
-    if(!r.mmsi)throw Error('Row '+(i+2)+' has no MMSI.');
-    if(seen.has(r.mmsi))throw Error('Duplicate MMSI '+r.mmsi+' found.');
-    seen.add(r.mmsi);rows.push(r);
-  }
-  return{rows,comments,headers};
-}
+let central=null,user=null,results=[],skippedContributions=[],contributionRows=[],syncUpdates=[];
+let tableSort={key:'mmsi',direction:1},tableSearch='',tablePage=0;
+let uploadDone=false,syncDone=false,contributionsOpen=null;
+const MIGRATION_MSG='Contribution submissions are temporarily disabled while the database migration is in progress. You can still load, compare and download your personal ShipDB. Please try again after the migration is complete.';
+const UNVERIFIED_MSG='Contribution status could not be verified. Upload is temporarily disabled. Reload the central database to check again.';
+const UNCLEAR_SYNC_MSG='The synchronization did not return a confirmed result. Reload the central database and compare again before retrying.';
+
+// ---------------------------------------------------------------------------
+// Shared validation (same rules as the Worker)
+// ---------------------------------------------------------------------------
+function daysFromCivil(y,m,d){y-=m<=2?1:0;const era=Math.floor(y/400),yoe=y-era*400,mp=(m+9)%12,doy=Math.floor((153*mp+2)/5)+d-1,doe=yoe*365+Math.floor(yoe/4)-Math.floor(yoe/100)+doy;return era*146097+doe-719468}
+function dayToIso(z){z+=719468;const era=Math.floor(z/146097),doe=z-era*146097,yoe=Math.floor((doe-Math.floor(doe/1460)+Math.floor(doe/36524)-Math.floor(doe/146096))/365);let y=yoe+era*400;const doy=doe-(365*yoe+Math.floor(yoe/4)-Math.floor(yoe/100)),mp=Math.floor((5*doy+2)/153),d=doy-Math.floor((153*mp+2)/5)+1,m=mp<10?mp+3:mp-9;y+=m<=2?1:0;return String(y).padStart(4,'0')+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
+// Strict YYYY-MM-DD -> UTC day number or null (no Date.parse, no local time zone).
+function parseIsoDay(v){if(typeof v!=='string'||v.length!==10||v[4]!=='-'||v[7]!=='-')return null;for(const i of [0,1,2,3,5,6,8,9]){const c=v.charCodeAt(i);if(c<48||c>57)return null}const y=+v.slice(0,4),m=+v.slice(5,7),d=+v.slice(8,10);if(m<1||m>12||d<1||d>31)return null;const day=daysFromCivil(y,m,d);return dayToIso(day)===v?day:null}
+function utcToday(){return Math.floor(Date.now()/86400000)}
+function validMmsi(v){return /^\d{9}$/.test(String(v??'').trim())}
+function normShipType(v){const s=String(v??'').trim();if(!/^\d{1,9}$/.test(s))return null;const n=Number(s);return n>=1&&n<=99?n:null}
+function normDimension(v){const s=String(v??'').trim();if(!/^\d+(\.\d+)?$/.test(s))return null;const n=Number(s);return Number.isFinite(n)&&n>0?n:null}
+function normField(f,v){return f==='ship_type'?normShipType(v):normDimension(v)}
+function coreReasons(row){const r=[];if(!validMmsi(row.mmsi))r.push('MMSI must have exactly 9 digits');if(normShipType(row.ship_type)===null)r.push('AIS type missing or not 1–99');if(normDimension(row.length_m)===null)r.push('LOA (length_m) missing or not > 0');if(normDimension(row.beam_m)===null)r.push('Beam (beam_m) missing or not > 0');return r}
+
+// ---------------------------------------------------------------------------
+// CSV
+// ---------------------------------------------------------------------------
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function quote(v){v=String(v??'');return /[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
-function makeCSV(rows,comments=[]){
-  // The Worker expects the CSV header as the first line; comments are omitted on upload.
-  const out=[FIELDS.join(',')];
-  for(const r of rows)out.push(FIELDS.map(f=>quote(r[f])).join(','));
-  return '\uFEFF'+out.join('\r\n')+'\r\n';
-}
-async function loadCentral(){
-  const button=$('loadCentralBtn');
-  const token=$('userToken').value.trim();
 
-  if(!token){
-    $('centralStatus').className='status err';
-    $('centralStatus').textContent='Enter your personal access token first.';
-    return;
+// Parses a ShipDB CSV. Returns rows with their physical line numbers and a
+// list of duplicate MMSIs (never picks one of several duplicate rows).
+function parseShipCsv(text,label){
+  text=text.replace(/^﻿/,'');
+  const records=[];let row=[],field='',quoted=false,line=1,start=1;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(quoted){if(c==='"'&&text[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=false;else{if(c==='\n')line++;field+=c}}
+    else if(c==='"'&&field==='')quoted=true;
+    else if(c===','){row.push(field);field=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);records.push({line:start,cells:row});row=[];field='';line++;start=line}
+    else field+=c;
   }
+  if(quoted)throw Error(label+': CSV contains an unclosed quotation mark.');
+  if(field!==''||row.length){row.push(field);records.push({line:start,cells:row})}
+  const comments=[];let k=0;
+  while(k<records.length){const first=(records[k].cells[0]||'').trim();if(records[k].cells.every(v=>!v.trim())){k++;continue}if(first.startsWith('#')){comments.push(records[k].cells.join(','));k++;continue}break}
+  if(k>=records.length)throw Error(label+': no CSV header row found.');
+  const headers=records[k].cells.map(x=>x.trim().toLowerCase());
+  if(!headers.includes('mmsi'))throw Error(label+': required column "mmsi" is missing.');
+  if(new Set(headers).size!==headers.length)throw Error(label+': CSV contains duplicate column names.');
+  const rows=[],lines=new Map();
+  for(let i=k+1;i<records.length;i++){
+    const rec=records[i];
+    if(rec.cells.every(v=>!v.trim()))continue;
+    if(rec.cells.length!==headers.length)throw Error(label+': line '+rec.line+' has '+rec.cells.length+' columns; expected '+headers.length+'.');
+    const r={_line:rec.line};
+    FIELDS.forEach(f=>r[f]=headers.includes(f)?(rec.cells[headers.indexOf(f)]||'').trim():'');
+    if(!r.mmsi)throw Error(label+': line '+rec.line+' has no MMSI.');
+    rows.push(r);
+    const l=lines.get(r.mmsi);if(l)l.push(rec.line);else lines.set(r.mmsi,[rec.line]);
+  }
+  const duplicates=[...lines].filter(([,l])=>l.length>1).map(([mmsi,l])=>({mmsi,lines:l}));
+  return{rows,comments,headers,duplicates};
+}
+function duplicateReport(label,dups){return label+' contains '+dups.length+' duplicate MMSI(s). Repair the file first; no row is chosen automatically.\n'+dups.slice(0,50).map(d=>'  MMSI '+d.mmsi+': lines '+d.lines.join(', ')).join('\n')+(dups.length>50?'\n  … '+(dups.length-50)+' more':'')}
 
-  button.disabled=true;
-  centralReady=false;
-  $('compareBtn').disabled=true;
-  $('centralStatus').className='status';
-  $('centralStatus').textContent='Authenticating and loading the central database…';
+function csvText(rows,fields,comments){
+  const out=[...comments,fields.join(',')];
+  for(const r of rows)out.push(fields.map(f=>quote(r[f])).join(','));
+  return '﻿'+out.join('\r\n')+'\r\n';
+}
+function downloadText(name,text){
+  const blob=new Blob([text],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function sha256Hex(text){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+function contributionCsv(rows){return '﻿'+[CORE_FIELDS.join(','),...rows.map(r=>CORE_FIELDS.map(f=>quote(r[f])).join(','))].join('\r\n')+'\r\n'}
 
+// ---------------------------------------------------------------------------
+// API helpers: safe JSON, readable errors
+// ---------------------------------------------------------------------------
+async function api(path,{method='GET',headers={},body,token}={}){
+  let response;
   try{
-    const response=await fetch(API_BASE+'/api/central-db',{
-      method:'GET',
-      headers:{Authorization:'Bearer '+token},
-      cache:'no-store'
-    });
-
-    if(!response.ok){
-      let detail='';
-      try{
-        const data=await response.json();
-        detail=data.error||'';
-      }catch{}
-
-      if(response.status===401){
-        throw Error('Access denied. Check that your personal access token is correct and has not been revoked.');
-      }
-
-      throw Error(detail||'HTTP '+response.status);
-    }
-
-    const parsed=parseCSV(await response.text());
-    centralRows=parsed.rows;
-    centralComments=parsed.comments;
-    centralHeaders=parsed.headers;
-    centralReady=true;
-
-    $('centralStatus').className='status ok';
-    $('centralStatus').textContent='Authenticated. Central database loaded: '+centralRows.length.toLocaleString()+' records.';
-    $('compareBtn').disabled=!$('userFile').files.length;
+    response=await fetch(API_BASE+path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...headers},body,cache:'no-store'});
   }catch(e){
-    centralRows=[];
-    centralComments=[];
-    centralHeaders=FIELDS;
-    centralReady=false;
-    $('centralStatus').className='status err';
-    $('centralStatus').textContent='Could not load central CSV: '+e.message;
-  }finally{
-    button.disabled=false;
+    const err=Error('Network error: the API could not be reached. Check your connection and try again.');err.status=0;throw err;
   }
+  const text=await response.text();
+  let data=null;
+  try{data=text?JSON.parse(text):{}}catch{data=null}
+  if(!response.ok){
+    const err=Error(describeError(response.status,data,text));
+    err.status=response.status;err.data=data||{};throw err;
+  }
+  return data===null?{raw:text}:data;
 }
-$('loadCentralBtn').addEventListener('click',loadCentral);
-$('userToken').addEventListener('keydown',event=>{if(event.key==='Enter')loadCentral();});
-$('userFile').addEventListener('change',()=>{
-  $('compareBtn').disabled=!(centralReady&&$('userFile').files.length);
-  $('status').textContent=$('userFile').files.length?'Local file selected: '+$('userFile').files[0].name:'Please select a CSV file.';
-});
-function validShipData(row){
-  const reasons=[];
-  const mmsi=String(row.mmsi??'').trim();
-  const type=String(row.ship_type??'').trim();
-  const loa=String(row.length_m??'').trim();
-  const beam=String(row.beam_m??'').trim();
-  if(!/^\d{9}$/.test(mmsi))reasons.push('Missing or invalid MMSI (must be 9 digits)');
-  if(!type||!/^\d+$/.test(type)||Number(type)<1||Number(type)>99)reasons.push('Missing or invalid AIS Type');
-  if(!loa||!Number.isFinite(Number(loa))||Number(loa)<=0)reasons.push('Missing or invalid LOA (length_m)');
-  if(!beam||!Number.isFinite(Number(beam))||Number(beam)<=0)reasons.push('Missing or invalid BEAM (beam_m)');
-  return reasons;
+function describeError(status,data,text){
+  const code=data&&data.code?' ['+data.code+']':'';
+  const msg=data&&data.error?data.error:(text?text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160):'');
+  const prefix={0:'Network error',400:'Request rejected',401:'Access denied',403:'Forbidden',404:'Not found',409:'Conflict',410:'Expired',413:'Too large',415:'Wrong content type',429:'Too many requests',500:'Server error',502:'Bad gateway',503:'Service unavailable'}[status]||('HTTP '+status);
+  let out=prefix+code+(msg?': '+msg:'');
+  if(status===401&&!(data&&data.code))out+=' Check the token.';
+  if(data&&data.requestId)out+=' (request '+data.requestId+')';
+  return out;
 }
+function setStatus(id,text,cls=''){const el=$(id);el.className='status'+(cls?' '+cls:'');el.textContent=text}
+
+// ---------------------------------------------------------------------------
+// 1 + 2: load and compare
+// ---------------------------------------------------------------------------
+async function loadCentral(){
+  const token=$('userToken').value.trim();
+  if(!token){setStatus('centralStatus','Enter your personal access token first.','err');return}
+  const button=$('loadCentralBtn');button.disabled=true;central=null;$('compareBtn').disabled=true;
+  setStatus('centralStatus','Authenticating and loading the central database…');
+  try{
+    let response;
+    try{response=await fetch(API_BASE+'/api/central-db',{headers:{Authorization:'Bearer '+token},cache:'no-store'})}
+    catch{throw Error('Network error: the API could not be reached.')}
+    const text=await response.text();
+    if(!response.ok){let data=null;try{data=JSON.parse(text)}catch{}throw Error(describeError(response.status,data,text))}
+    const parsed=parseShipCsv(text,'Central database');
+    if(parsed.duplicates.length){central=null;setStatus('centralStatus',duplicateReport('The central database',parsed.duplicates),'err');return}
+    central=parsed;
+    setStatus('centralStatus','Authenticated. Central database loaded: '+central.rows.length.toLocaleString()+' records.','ok');
+    await checkContributionState();
+    $('compareBtn').disabled=!$('userFile').files.length;
+  }catch(e){central=null;setStatus('centralStatus','Could not load the central database: '+e.message,'err')}
+  finally{button.disabled=false}
+}
+
+// Contribution submissions are paused while the status migration runs (HTTP 503 MIGRATION_PENDING).
+async function checkContributionState(){
+  try{const h=await api('/api/health');contributionsOpen=h.contributions==='open'}
+  catch{contributionsOpen=null}
+}
+async function runCompare(){
+  try{
+    const file=$('userFile').files[0];
+    if(!file)throw Error('Please select your CSV first.');
+    if(!central)throw Error('Load the central database first.');
+    const parsed=parseShipCsv(await file.text(),'Your file');
+    if(parsed.duplicates.length)throw Error(duplicateReport('Your file',parsed.duplicates));
+    user=parsed;
+    compareRows();
+  }catch(e){setStatus('status',e.message,'err')}
+}
+
 function compareRows(){
-  const cMap=new Map(centralRows.map(r=>[r.mmsi,{...r}]));
-  const uMap=new Map(userRows.map(r=>[r.mmsi,{...r}]));
-  const all=new Map();centralRows.forEach(r=>all.set(r.mmsi,{...r}));
-  let newCount=0,fillCount=0;
-  const candidates=new Map();skippedContributions=[];results=[];
-  for(const u of userRows){
+  const today=utcToday();
+  const cMap=new Map(central.rows.map(r=>[r.mmsi,r]));
+  const uMap=new Map(user.rows.map(r=>[r.mmsi,r]));
+  const fill=$('fillBlanks').checked,includeConflicts=$('replaceCentral').checked;
+  const merged=new Map(central.rows.map(r=>[r.mmsi,{...r}]));
+  let newCount=0,fillCount=0,conflictCount=0;
+  results=[];skippedContributions=[];contributionRows=[];syncUpdates=[];
+
+  for(const u of user.rows){
     const c=cMap.get(u.mmsi);
+    const uReasons=coreReasons(u);
     if(!c){
-      newCount++;all.set(u.mmsi,{...u});candidates.set(u.mmsi,{...u,reason:'NEW MMSI'});
-      results.push({mmsi:u.mmsi,status:'NEW MMSI',base:null,user:u,contribution:true});continue;
+      newCount++;
+      merged.set(u.mmsi,{...u});
+      const res={mmsi:u.mmsi,status:'NEW MMSI',base:null,user:u,diffs:[],missing:[]};
+      if(uReasons.length){res.contributionValidity='INVALID';res.contributionReasons=uReasons;skippedContributions.push({mmsi:u.mmsi,row:u,reasons:uReasons})}
+      else{res.contributionValidity='VALID';res.contributionReasons=[];contributionRows.push(canonicalCore(u))}
+      res.syncState='NOT IN CENTRAL';res.syncReason='Synchronized after the new MMSI is published';
+      results.push(res);continue;
     }
-    const diffs=[],missing=[];
-    for(const f of FIELDS.slice(1)){
-      if(!c[f]&&u[f]){missing.push(f);fillCount++}
-      else if(c[f]&&u[f]&&c[f]!==u[f])diffs.push(f);
+    const missing=[],diffs=[];
+    for(const f of VALUE_FIELDS){
+      const cv=normField(f,c[f]),uv=normField(f,u[f]);
+      if(cv===null&&uv!==null)missing.push(f);
+      else if(cv!==null&&uv!==null&&cv!==uv)diffs.push(f);
     }
-    const merged=all.get(u.mmsi);
-    if($('fillBlanks').checked)for(const f of FIELDS.slice(1))if(!merged[f]&&u[f])merged[f]=u[f];
-    if(missing.length||(diffs.length&&$('replaceCentral').checked)){
-      const candidate={...merged};
-      if(diffs.length&&$('replaceCentral').checked)for(const f of diffs)candidate[f]=u[f];
-      candidates.set(u.mmsi,{...candidate,reason:missing.length?'FILL MISSING FIELDS':'CONFLICT FOR REVIEW'});
-    }
-    results.push({mmsi:u.mmsi,status:diffs.length?'CONFLICT':missing.length?'CAN FILL':'MATCH',base:c,user:u,diffs,missing,contribution:candidates.has(u.mmsi)});
+    fillCount+=missing.length;conflictCount+=diffs.length;
+
+    // personal merged copy (only here the fill option applies)
+    const m=merged.get(u.mmsi);
+    if(fill)for(const f of missing)m[f]=u[f];
+    const cDay=parseIsoDay(c.last_seen_utc),uDay=parseIsoDay(u.last_seen_utc);
+    if(uDay!==null&&uDay<=today&&(cDay===null||uDay>cDay))m.last_seen_utc=u.last_seen_utc;
+
+    // contribution candidate: built from central valid values + own values, independent of the fill option
+    const res={mmsi:u.mmsi,base:c,user:u,diffs,missing};
+    res.status=diffs.length?'CONFLICT':missing.length?'CAN FILL':uReasons.length?'LOCAL INVALID':'MATCH';
+    if(missing.length||(diffs.length&&includeConflicts)){
+      const cand={mmsi:u.mmsi};
+      for(const f of VALUE_FIELDS){
+        const cv=normField(f,c[f]),uv=normField(f,u[f]);
+        cand[f]=(missing.includes(f)||(includeConflicts&&diffs.includes(f)))?uv:cv;
+      }
+      const reasons=coreReasons(cand);
+      if(reasons.length){res.contributionValidity='INVALID';res.contributionReasons=reasons;skippedContributions.push({mmsi:u.mmsi,row:cand,reasons})}
+      else{res.contributionValidity='VALID';res.contributionReasons=[];contributionRows.push(canonicalCore(cand))}
+    }else if(uReasons.length&&!diffs.length){res.contributionValidity='INVALID';res.contributionReasons=uReasons}
+    else{res.contributionValidity='NOT INCLUDED';res.contributionReasons=[diffs.length?'Conflicts are only included when the second option is enabled':'No new or missing data']}
+
+    // last-seen synchronization candidate
+    const cCore=VALUE_FIELDS.map(f=>normField(f,c[f])),uCore=VALUE_FIELDS.map(f=>normField(f,u[f]));
+    if(!validMmsi(u.mmsi)){res.syncState='—';res.syncReason='MMSI must have 9 digits'}
+    else if(cCore.includes(null)){res.syncState='—';res.syncReason='Central core data incomplete'}
+    else if(uCore.includes(null)){res.syncState='—';res.syncReason='Your core data incomplete'}
+    else if(cCore.some((v,i)=>v!==uCore[i])){res.syncState='—';res.syncReason='Core data differs'}
+    else if(uDay===null){res.syncState='—';res.syncReason=u.last_seen_utc?'Invalid date (YYYY-MM-DD required)':'No local date'}
+    else if(uDay>today){res.syncState='—';res.syncReason='Date is in the future (UTC)'}
+    else if(cDay!==null&&uDay<=cDay){res.syncState='CURRENT';res.syncReason='Central date is the same or newer'}
+    else{res.syncState='SYNC';res.syncReason='Newer local date';syncUpdates.push({mmsi:u.mmsi,ship_type:uCore[0],length_m:uCore[1],beam_m:uCore[2],last_seen_utc:u.last_seen_utc})}
+    if(res.status==='MATCH'&&res.syncState==='SYNC')res.status='LAST SEEN UPDATE';
+    results.push(res);
   }
-  for(const c of centralRows)if(!uMap.has(c.mmsi))results.push({mmsi:c.mmsi,status:'CENTRAL ONLY',base:c,user:null,contribution:false});
-  const validContributions=[];
-  const validContributionMMSIs=new Set();
-  const invalidContributionMMSIs=new Map();
-  for(const [mmsi,row] of candidates){
-    const reasons=validShipData(row);
-    if(reasons.length){
-      skippedContributions.push({mmsi,row,reasons,reason:row.reason||'NEW MMSI'});
-      invalidContributionMMSIs.set(mmsi,reasons);
-    }else{
-      validContributionMMSIs.add(mmsi);
-      validContributions.push(Object.fromEntries(FIELDS.map(f=>[f,row[f]??''])));
-    }
-  }
-  for(const result of results){
-    if(!result.user){result.contributionValidity='';result.contributionReasons=[];}
-    else if(validContributionMMSIs.has(result.mmsi)){result.contributionValidity='VALID';result.contributionReasons=[];}
-    else if(invalidContributionMMSIs.has(result.mmsi)){result.contributionValidity='INVALID';result.contributionReasons=invalidContributionMMSIs.get(result.mmsi);}
-    else{
-      const sourceReasons=validShipData(result.user);
-      if(sourceReasons.length){result.contributionValidity='INVALID';result.contributionReasons=sourceReasons;}
-      else{result.contributionValidity='NOT INCLUDED';result.contributionReasons=['No new or missing data selected for contribution'];}
-    }
-  }
-  window.mergedRows=[...all.values()];window.contributionRows=validContributions;
-  $('centralCount').textContent=centralRows.length.toLocaleString();
-  $('userCount').textContent=userRows.length.toLocaleString();
+  for(const c of central.rows)if(!uMap.has(c.mmsi))results.push({mmsi:c.mmsi,status:'CENTRAL ONLY',base:c,user:null,contributionValidity:'',contributionReasons:[],syncState:'',syncReason:'',diffs:[],missing:[]});
+
+  window.mergedRows=[...merged.values()];
+  $('centralCount').textContent=central.rows.length.toLocaleString();
+  $('userCount').textContent=user.rows.length.toLocaleString();
   $('newCount').textContent=newCount.toLocaleString();
   $('fillCount').textContent=fillCount.toLocaleString();
-  $('eligibleCount').textContent=validContributions.length.toLocaleString();
+  $('conflictCount').textContent=conflictCount.toLocaleString();
+  $('eligibleCount').textContent=contributionRows.length.toLocaleString();
   $('skippedCount').textContent=skippedContributions.length.toLocaleString();
-  $('results').hidden=false;render();renderSkipped();
-  $('status').className='status ok';
-  $('status').textContent='Comparison complete. Contributions are exported only when AIS Type, LOA, and BEAM are valid. No files were uploaded and the repository was not changed.';
-  $('exportStatus').textContent='Ready to export. Incomplete or invalid records will be excluded from the contribution.';
+  $('syncCount').textContent=syncUpdates.length.toLocaleString();
+  uploadDone=false;syncDone=false;tablePage=0;
+  $('results').hidden=false;$('results').classList.remove('stale');
+  render();renderSkipped();updateActionButtons();
+  setStatus('status','Comparison complete. Nothing has been uploaded yet.','ok');
+  setStatus('exportStatus','Ready to export.');
+  setStatus('syncStatus',syncUpdates.length?syncUpdates.length.toLocaleString()+' last-seen date(s) can be synchronized.':'No last-seen dates to synchronize.');
+  const later=contributionRows.length?'\nYou can download the contribution CSV ('+contributionRows.length.toLocaleString()+' valid record(s)) and submit it later.':'';
+  if(contributionsOpen===false)setStatus('uploadStatus',MIGRATION_MSG+later,'warn');
+  else if(contributionsOpen!==true)setStatus('uploadStatus',UNVERIFIED_MSG+later,'warn');
+  else setStatus('uploadStatus',contributionRows.length?contributionRows.length.toLocaleString()+' valid record(s) can be submitted for review.':'No valid contribution records.');
 }
+function canonicalCore(r){return{mmsi:String(r.mmsi).trim(),ship_type:String(normShipType(r.ship_type)),length_m:String(normDimension(r.length_m)),beam_m:String(normDimension(r.beam_m))}}
+function updateActionButtons(){
+  $('syncLastSeen').disabled=syncDone||!syncUpdates.length;
+  // Fail-closed: uploads only when the API confirmed that submissions are open.
+  $('uploadContribution').disabled=uploadDone||!contributionRows.length||contributionsOpen!==true;
+}
+
+// ---------------------------------------------------------------------------
+// 3: table
+// ---------------------------------------------------------------------------
 function renderSkipped(){
-  $('skippedBody').innerHTML=skippedContributions.map(x=>'<tr><td>'+esc(x.mmsi)+'</td><td>'+esc(x.reasons.join('; '))+'</td><td>'+esc(x.row.ship_type||'—')+'</td><td>'+esc(x.row.length_m||'—')+'</td><td>'+esc(x.row.beam_m||'—')+'</td></tr>').join('');
-  $('skippedHint').textContent=skippedContributions.length?skippedContributions.length.toLocaleString()+' records skipped. They will not be included in ship_db_contribution.csv.':'No records were skipped for missing or invalid AIS Type, LOA, or BEAM.';
+  const list=skippedContributions.slice(0,1000);
+  $('skippedBody').innerHTML=list.map(x=>'<tr><td>'+esc(x.mmsi)+'</td><td>'+esc(x.reasons.join('; '))+'</td><td>'+esc(x.row.ship_type||'—')+'</td><td>'+esc(x.row.length_m||'—')+'</td><td>'+esc(x.row.beam_m||'—')+'</td></tr>').join('');
+  $('skippedHint').textContent=skippedContributions.length?skippedContributions.length.toLocaleString()+' record(s) skipped'+(skippedContributions.length>list.length?' (first '+list.length+' shown)':'')+'. They are not included in the contribution.':'No records were skipped.';
 }
 function getSortValue(r,key){
-  if(key==='mmsi')return String(r.mmsi||'');
-  if(key==='status')return String(r.status||'');
-  if(key==='contributionValidity')return String(r.contributionValidity||'');
+  if(key==='mmsi'||key==='status'||key==='contributionValidity'||key==='syncState')return String(r[key]||'');
   return String(r.user?.[key]||r.base?.[key]||'');
 }
 function compareTableValues(a,b,key){
   const av=getSortValue(a,key),bv=getSortValue(b,key);
-  if(key==='ship_type'||key==='length_m'||key==='beam_m'){
-    const an=Number(av),bn=Number(bv);
-    const aValid=av!==''&&Number.isFinite(an),bValid=bv!==''&&Number.isFinite(bn);
-    if(aValid&&bValid)return an-bn;
-    if(aValid!==bValid)return aValid?-1:1;
-  }
-  // MMSIs are fixed-width strings; numeric-aware comparison preserves their natural order.
+  if(VALUE_FIELDS.includes(key)){const an=Number(av),bn=Number(bv),aV=av!==''&&Number.isFinite(an),bV=bv!==''&&Number.isFinite(bn);if(aV&&bV)return an-bn;if(aV!==bV)return aV?-1:1}
   return av.localeCompare(bv,undefined,{numeric:true,sensitivity:'base'});
 }
-function rowMatchesTableSearch(r,query){
-  if(!query)return true;
-  const values=[r.mmsi,r.status,r.contributionValidity,...(r.contributionReasons||[]),...FIELDS.slice(1).flatMap(f=>[r.base?.[f],r.user?.[f]]),...(r.diffs||[]),...(r.missing||[])];
-  return values.some(v=>String(v??'').toLocaleLowerCase().includes(query));
+function rowMatchesTableSearch(r,q){
+  if(!q)return true;
+  const values=[r.mmsi,r.status,r.contributionValidity,r.syncState,r.syncReason,...(r.contributionReasons||[]),...FIELDS.slice(1).flatMap(f=>[r.base?.[f],r.user?.[f]]),...(r.diffs||[]),...(r.missing||[])];
+  return values.some(v=>String(v??'').toLocaleLowerCase().includes(q));
 }
 function updateSortIndicators(){
   document.querySelectorAll('.sort-button').forEach(button=>{
-    const active=button.dataset.sort===tableSort.key;
-    const th=button.closest('th');
+    const active=button.dataset.sort===tableSort.key,th=button.closest('th');
     if(th)th.setAttribute('aria-sort',active?(tableSort.direction===1?'ascending':'descending'):'none');
-    const indicator=button.querySelector('.sort-indicator');
-    if(indicator)indicator.textContent=active?(tableSort.direction===1?'▲':'▼'):'';
+    const ind=button.querySelector('.sort-indicator');if(ind)ind.textContent=active?(tableSort.direction===1?'▲':'▼'):'';
   });
 }
+function pill(text,cls){return '<span class="pill '+cls+'">'+esc(text)+'</span>'}
 function render(){
-  const unchangedFiltered=results.filter(r=>!$('hideSame').checked||r.status!=='MATCH');
-  const list=unchangedFiltered.filter(r=>rowMatchesTableSearch(r,tableSearch));
+  const hideSame=$('hideSame').checked,showCentral=$('showCentralOnly').checked;
+  const filtered=results.filter(r=>(showCentral||r.status!=='CENTRAL ONLY')&&(!hideSame||r.status!=='MATCH'));
+  const list=filtered.filter(r=>rowMatchesTableSearch(r,tableSearch));
   list.sort((a,b)=>compareTableValues(a,b,tableSort.key)*tableSort.direction);
-  $('tbody').innerHTML=list.map(r=>{
+  const pages=Math.max(1,Math.ceil(list.length/PAGE_SIZE));
+  if(tablePage>=pages)tablePage=pages-1;
+  const page=list.slice(tablePage*PAGE_SIZE,(tablePage+1)*PAGE_SIZE);
+  $('tbody').innerHTML=page.map(r=>{
     const val=f=>{const c=r.base?.[f]||'',u=r.user?.[f]||'';return c&&u&&c!==u?esc(c)+' → <strong>'+esc(u)+'</strong>':esc(u||c||'—')};
-    const cls=r.status==='NEW MMSI'?'new':r.status==='CONFLICT'?'changed':'same';
-    const validityClass=r.contributionValidity==='VALID'?'validity-valid':r.contributionValidity==='INVALID'?'validity-invalid':'validity-none';
-    const validityCell=r.contributionValidity?'<td><span class="validity-pill '+validityClass+'" title="'+esc((r.contributionReasons||[]).join('; '))+'">'+esc(r.contributionValidity)+'</span>'+(r.contributionValidity==='INVALID'?'<div class="small">'+esc((r.contributionReasons||[]).join('; '))+'</div>':'')+'</td>':'<td>—</td>';
-    return '<tr><td>'+esc(r.mmsi)+'</td><td><span class="pill '+cls+'">'+esc(r.status)+'</span>'+(r.diffs?.length?'<div class="small">Conflicts: '+esc(r.diffs.join(', '))+'</div>':'')+'</td>'+validityCell+FIELDS.slice(1).map(f=>'<td>'+val(f)+'</td>').join('')+'</tr>';
+    const st=r.status==='NEW MMSI'?'p-new':r.status==='CONFLICT'?'p-conflict':r.status==='CAN FILL'?'p-fill':r.status==='LOCAL INVALID'?'p-invalid':r.status==='LAST SEEN UPDATE'?'p-sync':'';
+    const vc=r.contributionValidity==='VALID'?'p-valid':r.contributionValidity==='INVALID'?'p-invalid':'';
+    const validity=r.contributionValidity?pill(r.contributionValidity,vc)+(r.contributionReasons?.length?'<div class="small">'+esc(r.contributionReasons.join('; '))+'</div>':''):'—';
+    const sync=r.syncState?(r.syncState==='SYNC'?pill('SYNC','p-sync'):esc(r.syncState))+(r.syncReason?'<div class="small">'+esc(r.syncReason)+'</div>':''):'—';
+    return '<tr><td>'+esc(r.mmsi)+'</td><td>'+pill(r.status,st)+(r.diffs?.length?'<div class="small">Conflicts: '+esc(r.diffs.join(', '))+'</div>':'')+(r.missing?.length?'<div class="small">Can fill: '+esc(r.missing.join(', '))+'</div>':'')+'</td><td>'+validity+'</td><td>'+sync+'</td>'+FIELDS.slice(1).map(f=>'<td>'+val(f)+'</td>').join('')+'</tr>';
   }).join('');
   $('tableResultCount').textContent=list.length.toLocaleString()+' result'+(list.length===1?'':'s');
-  $('tableHint').textContent='Showing '+list.length.toLocaleString()+' of '+unchangedFiltered.length.toLocaleString()+' rows after the unchanged-row filter ('+results.length.toLocaleString()+' total comparison rows). Sorting and search affect the table display only; exports use the full data set.';
+  $('pageInfo').textContent='Page '+(tablePage+1)+' of '+pages;
+  $('pagePrev').disabled=tablePage===0;$('pageNext').disabled=tablePage>=pages-1;
+  $('tableHint').textContent='Showing '+page.length.toLocaleString()+' of '+list.length.toLocaleString()+' matching rows ('+results.length.toLocaleString()+' comparison rows in total). Filters, sorting and search affect the table only; exports use the full data set.';
   updateSortIndicators();
 }
-function download(name,rows,comments){
-  const out=[...(comments.length?comments:['# XPAISTraffic ShipDB - generated by community merger']),FIELDS.join(',')];
-  for(const r of rows)out.push(FIELDS.map(f=>quote(r[f])).join(','));
-  const blob=new Blob(['\uFEFF'+out.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+// ---------------------------------------------------------------------------
+// Exports, sync, upload
+// ---------------------------------------------------------------------------
+function downloadMerged(){
+  const comments=central.comments.length?central.comments:['# XPAISTraffic ShipDB - generated by community merger'];
+  downloadText('ship_db_merged.csv',csvText(window.mergedRows,FIELDS,comments));
+  setStatus('exportStatus','The merged personal CSV has been created ('+window.mergedRows.length.toLocaleString()+' rows).','ok');
 }
-$('compareBtn').addEventListener('click',async()=>{
-  try{const file=$('userFile').files[0];if(!file)throw Error('Please select your CSV first.');userRows=parseCSV(await file.text()).rows;compareRows();}
-  catch(e){$('status').className='status err';$('status').textContent=e.message;}
-});
-$('hideSame').addEventListener('change',render);
-$('tableSearch').addEventListener('input',()=>{
-  tableSearch=$('tableSearch').value.trim().toLocaleLowerCase();
-  render();
-});
-$('clearTableSearch').addEventListener('click',()=>{
-  $('tableSearch').value='';
-  tableSearch='';
-  render();
-  $('tableSearch').focus();
-});
-document.querySelectorAll('.sort-button').forEach(button=>{
-  button.addEventListener('click',()=>{
-    const key=button.dataset.sort;
-    if(tableSort.key===key)tableSort.direction*=-1;
-    else{tableSort.key=key;tableSort.direction=1;}
-    render();
-  });
-});
-$('fillBlanks').addEventListener('change',()=>{});
-$('replaceCentral').addEventListener('change',()=>{});
-$('downloadMerged').addEventListener('click',()=>{download('ship_db_merged.csv',window.mergedRows,centralComments);$('exportStatus').textContent='The merged personal CSV has been created.'});
-$('downloadContribution').addEventListener('click',()=>{
-  if(!window.contributionRows?.length){$('exportStatus').textContent='No valid records are available to contribute. If records were detected, they may be incomplete; see the skipped-records list.';return;}
-  download('ship_db_contribution.csv',window.contributionRows,[]);
-  $('exportStatus').textContent=window.contributionRows.length+' valid MMSI records exported. '+skippedContributions.length+' incomplete or invalid records were excluded.';
-});
-$('uploadContribution').addEventListener('click',async()=>{
-  const rows=window.contributionRows||[];
-  if(!rows.length){$('uploadStatus').className='status err';$('uploadStatus').textContent='No valid contribution records are available. Review the comparison and skipped records first.';return;}
-  const button=$('uploadContribution');button.disabled=true;$('uploadStatus').className='status';$('uploadStatus').textContent='Uploading '+rows.length+' records…';
-  try{
-    const accessToken=$('userToken').value.trim();
-    if(!accessToken)throw Error('Enter your personal access token and load the central database first.');
-    const response=await fetch(API_BASE+'/api/contributions',{method:'POST',headers:{'Content-Type':'text/csv','Authorization':'Bearer '+accessToken},body:makeCSV(rows)});
-    const data=await response.json();if(!response.ok)throw Error(data.error||('HTTP '+response.status));
-    $('uploadStatus').className='status ok';
-    $('uploadStatus').textContent='Upload successful. Contribution ID: '+data.id+'\nStatus: '+data.status+'\nRecords: '+data.rowCount+'\nThe contribution is awaiting review and has not changed the central database.';
-  }catch(e){$('uploadStatus').className='status err';$('uploadStatus').textContent='Upload failed: '+e.message+'\nCheck your connection and try again. The central database was not changed.';}
-  finally{button.disabled=false;}
-});
-function adminHeaders(){return{Authorization:'Bearer '+$('adminToken').value.trim()};}
-function requireAdminToken(){
-  if(!$('adminToken').value.trim()){
-    $('userTokenAdminStatus').className='status err';
-    $('userTokenAdminStatus').textContent='Enter ADMIN_TOKEN in the contribution-review section first.';
-    return false;
+function downloadContribution(){
+  if(!contributionRows.length){setStatus('exportStatus','No valid records are available to contribute.','warn');return}
+  downloadText('ship_db_contribution.csv',contributionCsv(contributionRows));
+  setStatus('exportStatus',contributionRows.length+' valid record(s) exported. '+skippedContributions.length+' incomplete or invalid record(s) were excluded.','ok');
+}
+
+function splitForLimits(items){
+  const chunks=[];let cur=[],bytes=14;
+  for(const it of items){
+    const b=JSON.stringify(it).length+1;
+    if(cur.length&&(cur.length>=LIMITS.syncUpdates||bytes+b>LIMITS.syncBytes-1024)){chunks.push(cur);cur=[];bytes=14}
+    cur.push(it);bytes+=b;
   }
-  return true;
+  if(cur.length)chunks.push(cur);
+  return chunks;
 }
-
-function showOneTimeUserToken(data,action){
-  const box=$('userTokenResult');
-  box.hidden=false;
-  box.className='status ok';
-  box.replaceChildren();
-
-  const heading=document.createElement('strong');
-  heading.textContent=action+' — copy this token now';
-  box.appendChild(heading);
-
-  const note=document.createElement('p');
-  note.textContent='The raw token cannot be retrieved later. Save it securely and send it privately to the intended user.';
-  box.appendChild(note);
-
-  const field=document.createElement('input');
-  field.type='text';
-  field.readOnly=true;
-  field.autocomplete='off';
-  field.value=data.token;
-  field.setAttribute('aria-label','New personal access token');
-  field.style.width='100%';
-  field.style.margin='8px 0';
-  box.appendChild(field);
-
-  const copy=document.createElement('button');
-  copy.textContent='Copy token';
-
-  copy.addEventListener('click',async()=>{
+async function syncLastSeen(){
+  const token=$('userToken').value.trim();
+  if(!token){setStatus('syncStatus','Enter your personal access token first.','err');return}
+  if(!syncUpdates.length){setStatus('syncStatus','No last-seen dates to synchronize.');return}
+  const button=$('syncLastSeen');button.disabled=true;
+  // Split only when a request would exceed the API limits.
+  const chunks=splitForLimits(syncUpdates);
+  const total={received:0,updated:0,unchanged:0,mismatched:0,ambiguous:0,notFound:0,rejected:0,duplicateInput:0,rateLimited:0};
+  const rejected=[];let quota=null,failed=null,done=0,unclear=false;
+  for(const chunk of chunks){
+    setStatus('syncStatus','Synchronizing'+(chunks.length>1?' part '+(done+1)+' of '+chunks.length:'')+'…');
     try{
-      await navigator.clipboard.writeText(data.token);
-      copy.textContent='Copied';
-    }catch{
-      field.focus();
-      field.select();
-      copy.textContent='Select and copy the token';
+      const data=await api('/api/last-seen-sync',{method:'POST',token,headers:{'Content-Type':'application/json'},body:JSON.stringify({updates:chunk})});
+      for(const k in total)total[k]+=data[k]||0;
+      rejected.push(...(data.rejectedDetails||[]));quota=data.quota;done++;
+    }catch(e){
+      failed=e;
+      // No confirmed result (network error, platform error such as 1102, 5xx, non-JSON): no automatic retry.
+      unclear=e.status===0||e.status>=500||!(e.data&&e.data.code);
+      break;
     }
-  });
-
-  box.appendChild(copy);
-}
-
-async function loadAdminUsers(){
-  if(!requireAdminToken())return;
-
-  const button=$('loadUserTokens');
-  button.disabled=true;
-  $('userTokenAdminStatus').className='status';
-  $('userTokenAdminStatus').textContent='Loading user access tokens…';
-  $('userTokenList').replaceChildren();
-
-  try{
-    const response=await fetch(API_BASE+'/api/admin/users',{
-      headers:adminHeaders(),
-      cache:'no-store'
-    });
-
-    const data=await response.json();
-    if(!response.ok)throw Error(data.error||('HTTP '+response.status));
-
-    const users=data.users||[];
-
-    $('userTokenAdminStatus').className='status ok';
-    $('userTokenAdminStatus').textContent=
-      'Loaded '+users.length+' user token record(s). Raw tokens are never listed.';
-
-    if(!users.length){
-      $('userTokenList').textContent='No user tokens have been created yet.';
-      return;
-    }
-
-    for(const user of users){
-      const card=document.createElement('div');
-      card.className='adminitem';
-
-      const title=document.createElement('strong');
-      title.textContent=user.label;
-      card.appendChild(title);
-
-      const meta=document.createElement('div');
-      meta.className='adminmeta';
-      meta.textContent=
-        (user.active?'ACTIVE':'REVOKED')+
-        ' · Created: '+(user.createdAt||'unknown')+
-        ' · Last used: '+(user.lastUsedAt||'never')+
-        (user.revokedAt?' · Revoked: '+user.revokedAt:'');
-
-      card.appendChild(meta);
-
-      const controls=document.createElement('div');
-      controls.className='apirow';
-
-      const rotate=document.createElement('button');
-      rotate.textContent='Rotate token';
-
-      rotate.addEventListener('click',async()=>{
-        if(!window.confirm(
-          'Rotate the token for "'+user.label+
-          '"? The previous token will stop working immediately.'
-        ))return;
-
-        rotate.disabled=true;
-
-        try{
-          const response=await fetch(
-            API_BASE+'/api/admin/users/'+encodeURIComponent(user.id)+'/rotate',
-            {
-              method:'POST',
-              headers:adminHeaders()
-            }
-          );
-
-          const data=await response.json();
-          if(!response.ok)throw Error(data.error||('HTTP '+response.status));
-
-          showOneTimeUserToken(data,'New token for '+user.label);
-          await loadAdminUsers();
-        }catch(e){
-          $('userTokenAdminStatus').className='status err';
-          $('userTokenAdminStatus').textContent=
-            'Could not rotate token: '+e.message;
-        }finally{
-          rotate.disabled=false;
-        }
-      });
-
-      controls.appendChild(rotate);
-
-      if(user.active){
-        const revoke=document.createElement('button');
-        revoke.textContent='Revoke token';
-
-        revoke.addEventListener('click',async()=>{
-          if(!window.confirm(
-            'Revoke the token for "'+user.label+
-            '"? This user will lose access immediately.'
-          ))return;
-
-          revoke.disabled=true;
-
-          try{
-            const response=await fetch(
-              API_BASE+'/api/admin/users/'+encodeURIComponent(user.id)+'/revoke',
-              {
-                method:'POST',
-                headers:adminHeaders()
-              }
-            );
-
-            const data=await response.json();
-            if(!response.ok)throw Error(data.error||('HTTP '+response.status));
-
-            await loadAdminUsers();
-
-            $('userTokenAdminStatus').className='status ok';
-            $('userTokenAdminStatus').textContent=
-              'Access revoked for '+user.label+
-              '. Existing contributions remain in the review queue.';
-          }catch(e){
-            $('userTokenAdminStatus').className='status err';
-            $('userTokenAdminStatus').textContent=
-              'Could not revoke token: '+e.message;
-          }finally{
-            revoke.disabled=false;
-          }
-        });
-
-        controls.appendChild(revoke);
-      }
-
-      card.appendChild(controls);
-      $('userTokenList').appendChild(card);
-    }
-  }catch(e){
-    $('userTokenAdminStatus').className='status err';
-    $('userTokenAdminStatus').textContent=
-      'User-token request failed: '+e.message;
-  }finally{
-    button.disabled=false;
   }
+  const lines=['Last-seen synchronization'+(chunks.length>1?' ('+done+' of '+chunks.length+' parts completed)':'')+':',
+    '  updated: '+total.updated+'   already current: '+total.unchanged+'   core data differs: '+total.mismatched+'   not in central DB: '+total.notFound,
+    '  rejected: '+(total.rejected+total.duplicateInput)+'   ambiguous central MMSI: '+total.ambiguous+'   over daily limit: '+total.rateLimited];
+  if(quota)lines.push('  daily limit: '+quota.usedToday.toLocaleString()+' of '+quota.limit.toLocaleString()+' used today (UTC)');
+  if(rejected.length)lines.push('  first rejections: '+rejected.slice(0,5).map(r=>r.mmsi+' ('+r.reasons.join(', ')+')').join('; '));
+  if(failed&&!done)lines.splice(0,lines.length,'Last-seen synchronization failed. No part of it was confirmed.');
+  if(failed&&unclear){
+    lines.push('','Failed: '+failed.message,UNCLEAR_SYNC_MSG);
+    if(done)lines.push('The parts listed above were confirmed.');
+    syncDone=true;   // locked until the next comparison
+  }else if(failed){
+    lines.push('','Failed: '+failed.message+(done?'\nThe parts listed above were applied.':'\nNothing was applied.'));
+  }else syncDone=true;
+  setStatus('syncStatus',lines.join('\n'),failed?'err':total.rateLimited?'warn':'ok');
+  updateActionButtons();
 }
 
-$('loadUserTokens').addEventListener('click',loadAdminUsers);
-
-$('createUserToken').addEventListener('click',async()=>{
-  if(!requireAdminToken())return;
-
-  const label=$('newUserLabel').value.trim();
-
-  if(!label){
-    $('userTokenAdminStatus').className='status err';
-    $('userTokenAdminStatus').textContent='Enter a user label first.';
+async function uploadContribution(){
+  const token=$('userToken').value.trim();
+  if(!token){setStatus('uploadStatus','Enter your personal access token first.','err');return}
+  if(!contributionRows.length){setStatus('uploadStatus','No valid contribution records are available.','warn');return}
+  if(contributionsOpen!==true){setStatus('uploadStatus',contributionsOpen===false?MIGRATION_MSG:UNVERIFIED_MSG,'warn');updateActionButtons();return}
+  const body=contributionCsv(contributionRows);
+  const bytes=new TextEncoder().encode(body).byteLength;
+  if(contributionRows.length>LIMITS.uploadRows||bytes>LIMITS.uploadBytes){
+    setStatus('uploadStatus','This contribution has '+contributionRows.length.toLocaleString()+' rows ('+(bytes/1048576).toFixed(2)+' MB). The limit per submission is '+LIMITS.uploadRows.toLocaleString()+' rows and 2 MB. Nothing was uploaded. Please contact the maintainer for a large initial contribution.','err');
     return;
   }
-
-  const button=$('createUserToken');
-  button.disabled=true;
-  $('userTokenAdminStatus').className='status';
-  $('userTokenAdminStatus').textContent='Creating user token…';
-
+  const button=$('uploadContribution');button.disabled=true;
+  setStatus('uploadStatus','Uploading '+contributionRows.length+' record(s)…');
   try{
-    const response=await fetch(API_BASE+'/api/admin/users',{
-      method:'POST',
-      headers:{
-        ...adminHeaders(),
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify({label})
-    });
-
-    const data=await response.json();
-    if(!response.ok)throw Error(data.error||('HTTP '+response.status));
-
-    $('newUserLabel').value='';
-    showOneTimeUserToken(data,'New token for '+data.user.label);
-
-    $('userTokenAdminStatus').className='status ok';
-    $('userTokenAdminStatus').textContent=
-      'User token created. Copy and securely store it before navigating away.';
-
-    await loadAdminUsers();
+    const key='csv-'+(await sha256Hex(body));
+    const data=await api('/api/contributions',{method:'POST',token,headers:{'Content-Type':'text/csv','Idempotency-Key':key},body});
+    uploadDone=true;
+    setStatus('uploadStatus',(data.replayed?'This contribution was already submitted earlier; no new submission was created.\n':'Upload successful.\n')+'Contribution ID: '+data.id+'\nStatus: '+data.status+'\nRecords: '+data.rowCount+'\nCore vessel data changes only after review and publication.','ok');
   }catch(e){
-    $('userTokenAdminStatus').className='status err';
-    $('userTokenAdminStatus').textContent=
-      'Could not create user token: '+e.message;
-  }finally{
-    button.disabled=false;
+    if(e.status===503&&e.data&&e.data.code==='MIGRATION_PENDING'){contributionsOpen=false;setStatus('uploadStatus',MIGRATION_MSG,'warn')}
+    else if(e.status===0||e.status>=500||!(e.data&&e.data.code))setStatus('uploadStatus','Upload failed: '+e.message+'\nThe upload did not return a confirmed result. Submitting the same contribution again is safe: it is not stored twice.','err');
+    else setStatus('uploadStatus','Upload failed: '+e.message,'err');
   }
-});
-async function loadAdmin(){
-  if(!$('adminToken').value.trim()){$('adminStatus').className='status err';$('adminStatus').textContent='Enter the admin token first.';return;}
-  const button=$('loadAdmin');button.disabled=true;$('adminStatus').className='status';$('adminStatus').textContent='Loading contributions…';$('adminList').replaceChildren();
-  try{
-    const response=await fetch(API_BASE+'/api/admin/contributions',{headers:adminHeaders(),cache:'no-store'});
-    const data=await response.json();if(!response.ok)throw Error(data.error||('HTTP '+response.status));
-    const items=data.contributions||[];$('adminStatus').className='status ok';$('adminStatus').textContent='Loaded '+items.length+' contribution(s).';
-    if(!items.length){$('adminList').textContent='No contributions submitted yet.';return;}
-    const list=$('adminList');
-    for(const item of items){
-      const card=document.createElement('div');card.className='adminitem';
-      const title=document.createElement('strong');title.textContent='Contribution '+item.id;card.appendChild(title);
-      const meta=document.createElement('div');meta.className='adminmeta';
-      meta.textContent=
-        'Submitted by: '+(item.submittedByLabel||'Legacy / unknown')+
-        ' · Submitted: '+(item.submittedAt||'unknown')+
-        ' · Rows: '+(item.rowCount??'unknown')+
-        ' · Updated: '+(item.updatedAt||'unknown')+
-        ' · Status: '+(item.status||'Pending');
-      card.appendChild(meta);
-      const controls=document.createElement('div');controls.className='apirow';
-      const select=document.createElement('select');
-      for(const status of ['Pending','In Review','Accepted','Rejected','Published']){const option=document.createElement('option');option.value=status;option.textContent=status;select.appendChild(option);}
-      select.value=item.status||'Pending';controls.appendChild(select);
-      const save=document.createElement('button');save.textContent='Save status';
-      save.addEventListener('click',async()=>{
-        save.disabled=true;
-        try{
-          const r=await fetch(API_BASE+'/api/admin/contributions/'+encodeURIComponent(item.id)+'/status',{method:'POST',headers:{...adminHeaders(),'Content-Type':'application/json'},body:JSON.stringify({status:select.value})});
-          const d=await r.json();if(!r.ok)throw Error(d.error||('HTTP '+r.status));
-          meta.textContent=
-            'Submitted by: '+(d.contribution.submittedByLabel||'Legacy / unknown')+
-          ' · Submitted: '+(d.contribution.submittedAt||'unknown')+
-          ' · Rows: '+(d.contribution.rowCount??'unknown')+
-          ' · Updated: '+(d.contribution.updatedAt||'unknown')+
-          ' · Status: '+d.contribution.status;
-          save.textContent='Saved';
-        }catch(e){$('adminStatus').className='status err';$('adminStatus').textContent='Could not update status: '+e.message;}
-        finally{save.disabled=false;}
-      });controls.appendChild(save);
-      const dl=document.createElement('button');dl.textContent='Download CSV';
-      dl.addEventListener('click',async()=>{
-        dl.disabled=true;
-        try{
-          const r=await fetch(API_BASE+'/api/admin/contributions/'+encodeURIComponent(item.id),{headers:adminHeaders()});
-          if(!r.ok){let d={};try{d=await r.json();}catch{}throw Error(d.error||('HTTP '+r.status));}
-          const blob=await r.blob(),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='contribution-'+item.id+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);
-        }catch(e){$('adminStatus').className='status err';$('adminStatus').textContent='Could not download contribution: '+e.message;}
-        finally{dl.disabled=false;}
-      });controls.appendChild(dl);card.appendChild(controls);list.appendChild(card);
-    }
-  }catch(e){$('adminStatus').className='status err';$('adminStatus').textContent='Admin request failed: '+e.message;$('adminList').replaceChildren();}
-  finally{button.disabled=false;}
+  finally{updateActionButtons()}
 }
-$('loadAdmin').addEventListener('click',loadAdmin);
+
+// ---------------------------------------------------------------------------
+// Wiring
+// ---------------------------------------------------------------------------
+let searchTimer=null;
+$('loadCentralBtn').addEventListener('click',loadCentral);
+$('userToken').addEventListener('keydown',e=>{if(e.key==='Enter')loadCentral()});
+$('userFile').addEventListener('change',()=>{$('compareBtn').disabled=!(central&&$('userFile').files.length);setStatus('status',$('userFile').files.length?'Local file selected: '+$('userFile').files[0].name:'Please select a CSV file.')});
+$('compareBtn').addEventListener('click',runCompare);
+$('fillBlanks').addEventListener('change',()=>{if(user&&central)compareRows()});
+$('replaceCentral').addEventListener('change',()=>{if(user&&central)compareRows()});
+$('hideSame').addEventListener('change',()=>{tablePage=0;render()});
+$('showCentralOnly').addEventListener('change',()=>{tablePage=0;render()});
+$('tableSearch').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{tableSearch=$('tableSearch').value.trim().toLocaleLowerCase();tablePage=0;render()},250)});
+$('clearTableSearch').addEventListener('click',()=>{clearTimeout(searchTimer);$('tableSearch').value='';tableSearch='';tablePage=0;render();$('tableSearch').focus()});
+$('pagePrev').addEventListener('click',()=>{if(tablePage>0){tablePage--;render()}});
+$('pageNext').addEventListener('click',()=>{tablePage++;render()});
+document.querySelectorAll('.sort-button').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.sort;if(tableSort.key===k)tableSort.direction*=-1;else{tableSort.key=k;tableSort.direction=1}render()}));
+$('downloadMerged').addEventListener('click',downloadMerged);
+$('downloadContribution').addEventListener('click',downloadContribution);
+$('syncLastSeen').addEventListener('click',syncLastSeen);
+$('uploadContribution').addEventListener('click',uploadContribution);
 $('resetBtn').addEventListener('click',()=>{
-  $('userFile').value='';$('tableSearch').value='';tableSearch='';tableSort={key:'mmsi',direction:1};$('results').hidden=true;$('status').className='status';$('status').textContent='Waiting for the central database and your CSV.';
-  $('compareBtn').disabled=true;userRows=[];results=[];window.mergedRows=[];window.contributionRows=[];
+  $('userFile').value='';$('tableSearch').value='';tableSearch='';tableSort={key:'mmsi',direction:1};tablePage=0;
+  $('results').hidden=true;user=null;results=[];contributionRows=[];syncUpdates=[];skippedContributions=[];window.mergedRows=[];
+  setStatus('status','Waiting for the central database and your CSV.');$('compareBtn').disabled=true;
 });
-
-function sameFieldValue(field,a,b){
-  const x=String(a??'').trim(),y=String(b??'').trim();
-  if(x===y)return true;
-  if(!x||!y)return false;
-  if(['ship_type','length_m','beam_m'].includes(field)){
-    const nx=Number(x),ny=Number(y);
-    return Number.isFinite(nx)&&Number.isFinite(ny)&&nx===ny;
-  }
-  return false;
-}
-async function preparePublication(){
-  const button=$('preparePublication'),downloadButton=$('downloadCandidate');
-  button.disabled=true;downloadButton.disabled=true;publicationCandidateRows=null;publicationConflicts=[];
-  $('publicationConflictBody').replaceChildren();$('publicationConflictHint').textContent='';
-  $('publicationStatus').className='status';$('publicationStatus').textContent='Loading contribution list and retrieving Accepted CSVs…';
-  try{
-    if(!$('adminToken').value.trim())throw Error('Enter the admin token in the admin section first.');
-    if(!centralReady)throw Error('The central database has not loaded successfully yet.');
-    const listResponse=await fetch(API_BASE+'/api/admin/contributions',{headers:adminHeaders(),cache:'no-store'});
-    const listData=await listResponse.json();
-    if(!listResponse.ok)throw Error(listData.error||('HTTP '+listResponse.status));
-    const accepted=(listData.contributions||[]).filter(x=>x.status==='Accepted');
-    if(!accepted.length)throw Error('No contributions have status Accepted. Review contributions and set approved ones to Accepted before preparing a publication candidate.');
-    const merged=new Map(centralRows.map(row=>[row.mmsi,{...row}]));
-    const originalKeys=new Set(merged.keys());
-    const counts={acceptedContributions:accepted.length,processedRows:0,addedMMSIs:0,filledFields:0,updatedLastSeen:0,conflicts:0,replacedConflicts:0};
-    const conflicts=[];
-    for(const item of accepted){
-      const response=await fetch(API_BASE+'/api/admin/contributions/'+encodeURIComponent(item.id),{headers:adminHeaders(),cache:'no-store'});
-      if(!response.ok){
-        let data={};try{data=await response.json()}catch{}
-        throw Error('Could not download contribution '+item.id+': '+(data.error||('HTTP '+response.status)));
-      }
-      const parsed=parseCSV(await response.text());
-      if(!parsed.rows.length)throw Error('Contribution '+item.id+' has no data rows.');
-      for(const incoming of parsed.rows){
-        const reasons=validShipData(incoming);
-        if(reasons.length)throw Error('Contribution '+item.id+' contains an invalid row for MMSI '+(incoming.mmsi||'(empty)')+': '+reasons.join('; ')+'. No candidate was generated.');
-        counts.processedRows++;
-        const existing=merged.get(incoming.mmsi);
-        if(!existing){
-          merged.set(incoming.mmsi,Object.fromEntries(FIELDS.map(f=>[f,String(incoming[f]??'').trim()])));
-          counts.addedMMSIs++;
-          continue;
-        }
-        for(const field of FIELDS.slice(1)){
-          const current=String(existing[field]??'').trim();
-          const proposed=String(incoming[field]??'').trim();
-          if(!proposed)continue;
-          if(!current){
-            existing[field]=proposed;
-            if(field==='last_seen_utc')counts.updatedLastSeen++;
-            else counts.filledFields++;
-            continue;
-          }
-          if(sameFieldValue(field,current,proposed))continue;
-          if(field==='last_seen_utc'){
-            // Dates in this DB use sortable UTC date/time strings. Never move last_seen backwards.
-            if(proposed>current){existing[field]=proposed;counts.updatedLastSeen++;}
-            continue;
-          }
-          counts.conflicts++;
-          const replace=$('replaceConflicts').checked;
-          conflicts.push({id:item.id,mmsi:incoming.mmsi,field,current,proposed,action:replace?'Replaced after manual approval':'Kept existing value'});
-          if(replace){existing[field]=proposed;counts.replacedConflicts++;}
-        }
-      }
-    }
-    publicationCandidateRows=[...merged.values()];
-    publicationComments=centralComments.length?centralComments:['# XPAISTraffic ShipDB - candidate generated by community contribution merger'];
-    publicationConflicts=conflicts;
-    $('publicationConflictBody').innerHTML=conflicts.slice(0,500).map(x=>'<tr><td>'+esc(x.id)+'</td><td>'+esc(x.mmsi)+'</td><td>'+esc(x.field)+'</td><td>'+esc(x.current)+'</td><td>'+esc(x.proposed)+'</td><td>'+esc(x.action)+'</td></tr>').join('');
-    $('publicationConflictHint').textContent=conflicts.length?(conflicts.length.toLocaleString()+' conflicting field values shown; '+Math.max(0,conflicts.length-500).toLocaleString()+' additional conflicts are omitted from this on-page list.'): 'No conflicting non-empty ship_type, length_m or beam_m values were found.';
-    $('publicationStatus').className='status ok';
-    $('publicationStatus').textContent=
-      'Candidate prepared (not published). Accepted contributions: '+counts.acceptedContributions+
-      '\nRows examined: '+counts.processedRows+
-      '\nNew MMSIs added: '+counts.addedMMSIs+
-      '\nMissing fields filled: '+counts.filledFields+
-      '\nlast_seen_utc advanced: '+counts.updatedLastSeen+
-      '\nConflicting fields found: '+counts.conflicts+
-      '\nConflicting fields replaced: '+counts.replacedConflicts+
-      '\nFinal candidate rows: '+publicationCandidateRows.length+
-      '\nReview the conflicts below, then download the candidate. Upload/commit to GitHub remains a separate manual step.';
-    downloadButton.disabled=false;
-  }catch(e){
-    publicationCandidateRows=null;
-    $('publicationStatus').className='status err';
-    $('publicationStatus').textContent='Could not prepare publication candidate: '+e.message;
-  }finally{button.disabled=false;}
-}
-$('preparePublication').addEventListener('click',preparePublication);
-$('downloadCandidate').addEventListener('click',()=>{
-  if(!publicationCandidateRows){$('publicationStatus').className='status err';$('publicationStatus').textContent='Prepare a candidate first.';return;}
-  download('ship_db.csv',publicationCandidateRows,publicationComments);
-  $('publicationStatus').className='status ok';
-  $('publicationStatus').textContent+='\nCandidate CSV downloaded. After verifying and committing it as the central ship_db.csv, change the included contributions from Accepted to Published.';
-});
-
 </script>
 </body>
 </html>
