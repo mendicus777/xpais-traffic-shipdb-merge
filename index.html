@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>XPAISTraffic ShipDB Community Merger</title>
+<title>XPAIS-Traffic ShipDB Community Merger</title>
 <style>
 :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#e8edf5;background:#0b1220}
 *{box-sizing:border-box}
@@ -43,13 +43,62 @@ th .sort-button:hover,th .sort-button:focus-visible{color:#7dd3fc;outline:1px so
 .small{font-size:.8rem;color:#9fb0c6}
 .stale{outline:2px solid #b45309;outline-offset:4px}
 code{color:#bae6fd}
-@media(max-width:650px){main{padding:20px 12px}.panel{padding:15px}.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* Header with linked XPAIS-Traffic logo */
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:28px;
+}
+.header-copy{min-width:0}
+.header-logo-link{
+  display:block;
+  flex:0 0 150px;
+  width:150px;
+  height:150px;
+  line-height:0;
+}
+.header-logo-link img{
+  display:block;
+  width:150px;
+  height:150px;
+  object-fit:contain;
+}
+.header-logo-link:focus-visible{
+  outline:2px solid #7dd3fc;
+  outline-offset:5px;
+  border-radius:12px;
+}
+@media(max-width:650px){
+  main{padding:20px 12px}
+  .panel{padding:15px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .header{align-items:flex-start;gap:12px}
+  .header-logo-link,.header-logo-link img{
+    flex-basis:92px;
+    width:92px;
+    height:92px;
+  }
+}
 </style>
 </head>
 <body>
 <main>
-<div class="eyebrow">XPAISTraffic · Community contribution</div>
-<h1>ShipDB <span>Merger</span></h1>
+<header class="header">
+  <div class="header-copy">
+    <div class="eyebrow">XPAIS-TRAFFIC · Community contribution</div>
+    <h1>ShipDB <span>Merger</span></h1>
+  </div>
+  <a class="header-logo-link"
+     href="https://forums.x-plane.org/files/file/100400-xpais-traffic/"
+     target="_blank"
+     rel="noopener noreferrer"
+     aria-label="Open XPAIS-Traffic on X-Plane.org">
+    <img src="assets/xpais-logo.png"
+         alt="XPAIS-Traffic — Real Data, Real Ships, Real Traffic">
+  </a>
+</header>
 <p class="muted">Compare your personal ShipDB with the central ShipDB. You can download an updated personal copy, submit new or missing vessel data for manual review, and synchronize the <code>last_seen_utc</code> dates of vessels whose data already matches. Your full personal database is never uploaded.</p>
 
 <section class="panel">
