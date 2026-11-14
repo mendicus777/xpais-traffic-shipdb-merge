@@ -112,7 +112,7 @@ code{color:#bae6fd}
 <input id="userFile" type="file" accept=".csv,text/csv">
 <div class="options">
 <label><input id="fillBlanks" type="checkbox" checked> Fill missing central values in my personal merged copy</label>
-<label><input id="replaceCentral" type="checkbox"> Include my differing values (conflicts) in the contribution for manual review</label>
+<label><input id="replaceCentral" type="checkbox"> Include my differing values (conflicts) in the contribution as hints for the maintainer – existing central values are never replaced</label>
 </div>
 <p class="small">Changing an option recalculates the comparison. The contribution never depends on the first option.</p>
 <div class="actions">
@@ -185,7 +185,7 @@ code{color:#bae6fd}
 </div>
 
 <h3>Skipped contribution records</h3>
-<p class="muted">Only records with a 9-digit MMSI, an AIS type 1–99 and a LOA and beam greater than 0 can be contributed. Skipped records are listed with the reason and are not exported.</p>
+<p class="muted">Only records with a 9-digit MMSI, an AIS type 1–99 and a LOA and beam greater than 0 can be contributed. Implausible dimensions are skipped as well: a LOA of 500 m or more (511/512 are AIS maximum values) or a beam greater than the LOA. Skipped records are listed with the reason and are not exported.</p>
 <div class="tablewrap">
 <table><thead><tr><th>MMSI</th><th>Reason skipped</th><th>AIS type</th><th>LOA</th><th>Beam</th></tr></thead><tbody id="skippedBody"></tbody></table>
 </div>
@@ -224,6 +224,10 @@ function validMmsi(v){return /^\d{9}$/.test(String(v??'').trim())}
 function normShipType(v){const s=String(v??'').trim();if(!/^\d{1,9}$/.test(s))return null;const n=Number(s);return n>=1&&n<=99?n:null}
 function normDimension(v){const s=String(v??'').trim();if(!/^\d+(\.\d+)?$/.test(s))return null;const n=Number(s);return Number.isFinite(n)&&n>0?n:null}
 function normField(f,v){return f==='ship_type'?normShipType(v):normDimension(v)}
+// Hard plausibility rules, identical to the Worker (PLAUS_HARD_*): such rows are never contributed.
+const PLAUS_HARD_MAX_LENGTH_M=500;
+function plausibilityReasons(row){const l=normDimension(row.length_m),b=normDimension(row.beam_m),r=[];if(l===null||b===null)return r;if(l>=PLAUS_HARD_MAX_LENGTH_M)r.push('LOA '+l+' m is not plausible ('+PLAUS_HARD_MAX_LENGTH_M+' m or more; 511/512 are AIS maximum values)');if(b>l)r.push('Beam '+b+' m is greater than LOA '+l+' m');return r}
+function contributionReasons(row){const r=coreReasons(row);return r.length?r:plausibilityReasons(row)}
 function coreReasons(row){const r=[];if(!validMmsi(row.mmsi))r.push('MMSI must have exactly 9 digits');if(normShipType(row.ship_type)===null)r.push('AIS type missing or not 1–99');if(normDimension(row.length_m)===null)r.push('LOA (length_m) missing or not > 0');if(normDimension(row.beam_m)===null)r.push('Beam (beam_m) missing or not > 0');return r}
 
 // ---------------------------------------------------------------------------
@@ -368,7 +372,8 @@ function compareRows(){
       newCount++;
       merged.set(u.mmsi,{...u});
       const res={mmsi:u.mmsi,status:'NEW MMSI',base:null,user:u,diffs:[],missing:[]};
-      if(uReasons.length){res.contributionValidity='INVALID';res.contributionReasons=uReasons;skippedContributions.push({mmsi:u.mmsi,row:u,reasons:uReasons})}
+      const nReasons=contributionReasons(u);
+      if(nReasons.length){res.contributionValidity='INVALID';res.contributionReasons=nReasons;skippedContributions.push({mmsi:u.mmsi,row:u,reasons:nReasons})}
       else{res.contributionValidity='VALID';res.contributionReasons=[];contributionRows.push(canonicalCore(u))}
       res.syncState='NOT IN CENTRAL';res.syncReason='Synchronized after the new MMSI is published';
       results.push(res);continue;
@@ -396,7 +401,7 @@ function compareRows(){
         const cv=normField(f,c[f]),uv=normField(f,u[f]);
         cand[f]=(missing.includes(f)||(includeConflicts&&diffs.includes(f)))?uv:cv;
       }
-      const reasons=coreReasons(cand);
+      const reasons=contributionReasons(cand);
       if(reasons.length){res.contributionValidity='INVALID';res.contributionReasons=reasons;skippedContributions.push({mmsi:u.mmsi,row:cand,reasons})}
       else{res.contributionValidity='VALID';res.contributionReasons=[];contributionRows.push(canonicalCore(cand))}
     }else if(uReasons.length&&!diffs.length){res.contributionValidity='INVALID';res.contributionReasons=uReasons}
