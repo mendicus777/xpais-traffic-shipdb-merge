@@ -95,13 +95,26 @@ code{color:#bae6fd}
 
 <div id="publicationPanel" class="subpanel" hidden>
 <h3 style="margin-top:0">Publish accepted contributions</h3>
-<p class="small">Select Accepted contributions above, create a preview, decide every conflict, then publish. The Worker reads the current central file, writes a backup to <code>backups/</code> and updates the central file with an ETag check. Newer <code>last_seen_utc</code> values in the central file are always kept. A preview is valid for 30 minutes and only for exactly the selected contributions.</p>
+<p class="small">Select Accepted contributions above and create a preview. <b>Existing valid central values are never changed</b>; differing proposals are only listed (download below). New MMSIs and empty central fields are filled automatically when all selected contributions propose the same row and its dimensions are plausible. Everything else appears in the review list and is <b>not published unless you pick a row</b>; skipped vessels are proposed again by later contributions. Rows with impossible dimensions (length of 500 m or more, or beam greater than length) are dropped. The Worker writes a backup to <code>backups/</code> and updates the central file with an ETag check. Newer <code>last_seen_utc</code> values in the central file are always kept. A preview is valid for 30 minutes and only for exactly the selected contributions.</p>
 <div class="apirow">
 <button id="pubPreview" class="primary">Create preview for selected</button>
 <span id="pubSelection" class="small">0 selected</span>
 </div>
 <div id="publicationStatus" class="status">No preview has been created.</div>
-<div class="tablewrap"><table><thead><tr><th>MMSI</th><th>Field</th><th>Current value</th><th>Decision</th></tr></thead><tbody id="publicationConflictBody"></tbody></table></div>
+<div id="pubDownloads" class="apirow" hidden>
+<button id="dlIgnored" class="subtle">Download kept-central differences (CSV)</button>
+<button id="dlRejected" class="subtle">Download dropped rows (CSV)</button>
+</div>
+<div id="reviewPanel" hidden>
+<h4>Review (optional)</h4>
+<p class="small">One line per vessel. Each proposed row comes complete from one source; fields of different contributions are never mixed. Without a decision the vessel is not published this time.</p>
+<div class="apirow">
+<label class="small">Show <select id="reviewFilter"><option value="all">All</option><option value="disagree">Contributions disagree</option><option value="warn">Plausibility warning</option><option value="picked">Picked</option></select></label>
+<button id="reviewMajority" class="subtle">Pick rows with a clear majority of users</button>
+<button id="reviewReset" class="subtle">Reset all to “not this time”</button>
+</div>
+<div class="tablewrap"><table><thead><tr><th>MMSI</th><th>Central now</th><th>Proposed rows (type / length / beam)</th><th>Decision</th></tr></thead><tbody id="publicationConflictBody"></tbody></table></div>
+</div>
 <div class="apirow"><button id="pubCommit" class="primary" disabled>Publish</button><span id="pubDecisionInfo" class="small"></span></div>
 <h4>Recent publications</h4>
 <div class="tablewrap"><table><thead><tr><th>Publication</th><th>State</th><th>Created</th><th>Backup</th><th>Summary</th></tr></thead><tbody id="publicationList"></tbody></table></div>
@@ -323,48 +336,116 @@ function renderContributions(items){
 function updateSelection(){$('pubSelection').textContent=selectedContributions.size+' selected'}
 
 // --- publication ---
+function csvField(v){v=String(v??'');return /[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function downloadText(name,text){const blob=new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+const shortId=id=>String(id||'').slice(0,8);
+const rowText=v=>v.ship_type+' / '+v.length_m+' / '+v.beam_m;
+function reviewKind(r){return{disagree:r.candidates.length>1,warn:r.candidates.some(c=>c.warnings&&c.warnings.length)}}
+
 async function createPreview(){
   if(!selectedContributions.size){setStatus('publicationStatus','Select at least one Accepted contribution.','warn');return}
   const b=$('pubPreview');b.disabled=true;currentPreview=null;$('pubCommit').disabled=true;$('publicationConflictBody').replaceChildren();
+  $('pubDownloads').hidden=true;$('reviewPanel').hidden=true;$('pubDecisionInfo').textContent='';
   setStatus('publicationStatus','Creating preview…');
   try{
     const p=await adminApi('/api/admin/publication/preview',{method:'POST',body:JSON.stringify({contributionIds:[...selectedContributions]})});
+    if(!Array.isArray(p.reviews))throw Error('The Worker answered in the old format. Deploy the new worker.js first.');
     currentPreview={...p,decisions:{}};
-    const s=p.summary;
-    setStatus('publicationStatus','Preview '+p.previewId+' (valid until '+p.expiresAt.replace('T',' ').slice(0,19)+' UTC)\nContributions: '+s.contributions+'   MMSIs: '+s.mmsis+'\nNew MMSIs: '+s.addedMmsis+'   fields to fill: '+s.filledFields+'   unchanged: '+s.unchangedRows+'\nConflicts needing a decision: '+s.conflicts,'ok');
+    const s=p.summary,reviews=p.reviews;
+    const disagree=reviews.filter(r=>reviewKind(r).disagree).length,warn=reviews.filter(r=>reviewKind(r).warn).length;
+    setStatus('publicationStatus',
+      'Preview '+p.previewId+' (valid until '+p.expiresAt.replace('T',' ').slice(0,19)+' UTC)'+
+      '\nContributions: '+s.contributions+'   MMSIs: '+s.mmsis+
+      '\nAutomatically: new MMSIs '+s.addedMmsis+'   filled fields '+s.filledFields+'   unchanged rows '+s.unchangedRows+
+      '\nCentral values kept: '+s.ignoredDifferences+' differing proposal(s) on '+s.ignoredMmsis+' MMSI(s) – ignored, nothing to decide'+
+      '\nDropped as implausible: '+(s.rejectedRows||0)+' row(s)'+
+      '\nReview: '+reviews.length+' vessel(s) ('+disagree+' with disagreeing contributions, '+warn+' with plausibility warning) – not published unless you pick a row',
+      'ok');
+    $('pubDownloads').hidden=false;
+    $('dlIgnored').disabled=!(p.ignoredDifferences||[]).length;
+    $('dlRejected').disabled=!(p.rejectedRows||[]).length;
+    $('reviewPanel').hidden=!reviews.length;
+    $('reviewFilter').value='all';
     renderConflicts();
   }catch(e){setStatus('publicationStatus','Preview failed: '+e.message+(e.data&&e.data.problems?'\n  '+e.data.problems.slice(0,20).map(x=>x.id+': '+x.problem).join('\n  '):''),'err')}
   finally{b.disabled=false}
 }
 function renderConflicts(){
   const tb=$('publicationConflictBody');tb.replaceChildren();
-  const conflicts=currentPreview.conflicts;
-  for(const cf of conflicts.slice(0,2000)){
-    const tr=document.createElement('tr');const td=t=>{const c=document.createElement('td');c.textContent=t;return c};
-    tr.append(td(cf.mmsi+(cf.newMmsi?' (new)':'')),td(cf.field),td(cf.current===''?'(empty)':cf.current+(cf.currentValid?'':' (invalid)')));
-    const dc=document.createElement('td');const sel=document.createElement('select');sel.setAttribute('aria-label','Decision for '+cf.id);
-    const none=document.createElement('option');none.value='';none.textContent='— choose —';sel.appendChild(none);
-    for(const o of cf.options){const op=document.createElement('option');op.value=o.choice;op.textContent=o.choice==='keep'?'Keep current value':'Use '+o.value+' ('+o.contributions.length+' contribution'+(o.contributions.length===1?'':'s')+')';sel.appendChild(op)}
-    sel.onchange=()=>{if(sel.value)currentPreview.decisions[cf.id]=sel.value;else delete currentPreview.decisions[cf.id];updateDecisionInfo()};
+  if(!currentPreview){updateDecisionInfo();return}
+  const filter=$('reviewFilter').value;
+  const td=t=>{const c=document.createElement('td');c.textContent=t;return c};
+  for(const r of currentPreview.reviews){
+    const k=reviewKind(r),picked=!!currentPreview.decisions[r.id];
+    if(filter==='disagree'&&!k.disagree)continue;
+    if(filter==='warn'&&!k.warn)continue;
+    if(filter==='picked'&&!picked)continue;
+    const tr=document.createElement('tr');
+    tr.appendChild(td(r.mmsi+(r.newMmsi?' (new)':'')));
+    tr.appendChild(td(r.current?rowText({ship_type:r.current.ship_type||'—',length_m:r.current.length_m||'—',beam_m:r.current.beam_m||'—'})+'  (fills: '+r.fillFields.join(', ')+')':'—'));
+    const cands=document.createElement('td');
+    r.candidates.forEach((c,i)=>{
+      const line=document.createElement('div');
+      const label=document.createElement('strong');label.textContent=(i+1)+': '+rowText(c.values);line.appendChild(label);
+      const who=document.createElement('span');who.className='small';
+      who.textContent='  '+c.users+' user'+(c.users===1?'':'s')+' ('+c.userLabels.join(', ')+'), '+c.contributions.length+' contribution'+(c.contributions.length===1?'':'s')+' ['+c.contributions.map(shortId).join(', ')+']';
+      line.appendChild(who);
+      for(const w of c.warnings||[]){const pill=document.createElement('span');pill.className='pill p-warn';pill.style.marginLeft='6px';pill.textContent=w;line.appendChild(pill)}
+      cands.appendChild(line);
+    });
+    tr.appendChild(cands);
+    const dc=document.createElement('td');const sel=document.createElement('select');sel.setAttribute('aria-label','Decision for MMSI '+r.mmsi);
+    const skip=document.createElement('option');skip.value='';skip.textContent='Not this time';sel.appendChild(skip);
+    r.candidates.forEach((c,i)=>{const op=document.createElement('option');op.value=c.choice;op.textContent='Use row '+(i+1)+': '+rowText(c.values);sel.appendChild(op)});
+    sel.value=currentPreview.decisions[r.id]||'';
+    sel.onchange=()=>{if(sel.value)currentPreview.decisions[r.id]=sel.value;else delete currentPreview.decisions[r.id];updateDecisionInfo()};
     dc.appendChild(sel);tr.appendChild(dc);tb.appendChild(tr);
   }
   updateDecisionInfo();
 }
 function updateDecisionInfo(){
-  if(!currentPreview){$('pubCommit').disabled=true;return}
-  const n=currentPreview.conflicts.length,d=Object.keys(currentPreview.decisions).length;
-  $('pubDecisionInfo').textContent=n?d+' of '+n+' conflicts decided':'No conflicts.';
-  $('pubCommit').disabled=d!==n;
+  if(!currentPreview){$('pubCommit').disabled=true;$('pubDecisionInfo').textContent='';return}
+  const n=currentPreview.reviews.length,d=Object.keys(currentPreview.decisions).length;
+  $('pubDecisionInfo').textContent=n?d+' of '+n+' review vessel(s) picked; '+(n-d)+' will not be published this time.':'Nothing to review.';
+  $('pubCommit').disabled=false;
+}
+// Picks the top row where it is supported by more distinct users than any other
+// row and carries no plausibility warning.
+function pickMajority(){
+  if(!currentPreview)return;
+  let picked=0;
+  for(const r of currentPreview.reviews){
+    if(r.candidates.length<2)continue;
+    const [a,b]=r.candidates;
+    if(a.users>b.users&&!(a.warnings&&a.warnings.length)){currentPreview.decisions[r.id]=a.choice;picked++}
+  }
+  renderConflicts();
+  setStatus('publicationStatus',$('publicationStatus').textContent.split('\nMajority:')[0]+'\nMajority: '+picked+' vessel(s) picked by a clear majority of users.','ok');
+}
+function resetDecisions(){if(!currentPreview)return;currentPreview.decisions={};renderConflicts()}
+function downloadIgnored(){
+  if(!currentPreview)return;
+  const rows=[['mmsi','field','central_value_kept','proposed_value','contributions'].join(',')];
+  for(const x of currentPreview.ignoredDifferences||[])rows.push([x.mmsi,x.field,x.current,x.proposed,x.contributions.join(' ')].map(csvField).join(','));
+  downloadText('kept_central_differences_'+currentPreview.previewId.slice(0,8)+'.csv',rows.join('\r\n')+'\r\n');
+}
+function downloadRejected(){
+  if(!currentPreview)return;
+  const rows=[['mmsi','ship_type','length_m','beam_m','contributions','reasons'].join(',')];
+  for(const x of currentPreview.rejectedRows||[])rows.push([x.mmsi,x.values.ship_type,x.values.length_m,x.values.beam_m,x.contributions.join(' '),x.reasons.join('; ')].map(csvField).join(','));
+  downloadText('dropped_rows_'+currentPreview.previewId.slice(0,8)+'.csv',rows.join('\r\n')+'\r\n');
 }
 async function commitPreview(){
   if(!currentPreview)return;
-  if(!confirm('Publish preview '+currentPreview.previewId+' to the central database?'))return;
+  const n=currentPreview.reviews.length,d=Object.keys(currentPreview.decisions).length;
+  if(!confirm('Publish preview '+currentPreview.previewId+' to the central database?\n\n'+d+' review vessel(s) picked, '+(n-d)+' not published this time.\nExisting central values are not changed.'))return;
   const b=$('pubCommit');b.disabled=true;setStatus('publicationStatus','Publishing…');
   try{
     const r=await adminApi('/api/admin/publication/commit',{method:'POST',body:JSON.stringify({previewId:currentPreview.previewId,decisions:currentPreview.decisions})});
-    const p=r.publication;
-    setStatus('publicationStatus','Publication '+p.publicationId+': '+p.state+'\nBackup: '+(p.backupKey||'-')+'\nCentral ETag: '+(p.resultEtag||'-')+(p.summary?'\nNew MMSIs: '+p.summary.addedMmsis+'   filled fields: '+p.summary.filledFields+'   replaced fields: '+p.summary.replacedFields:''),'ok');
+    const p=r.publication,s=p.summary;
+    setStatus('publicationStatus','Publication '+p.publicationId+': '+p.state+'\nBackup: '+(p.backupKey||'-')+'\nCentral ETag: '+(p.resultEtag||'-')+(s?'\nNew MMSIs: '+s.addedMmsis+'   filled fields: '+s.filledFields+'   picked in review: '+(s.pickedFromReview||0)+'   not published this time: '+(s.skippedMmsis||0)+'\nCentral values kept: '+(s.ignoredDifferences||0)+'   dropped as implausible: '+(s.rejectedRows||0):''),'ok');
     currentPreview=null;selectedContributions.clear();updateSelection();$('publicationConflictBody').replaceChildren();
+    $('pubDownloads').hidden=true;$('reviewPanel').hidden=true;
     await loadAdmin();
   }catch(e){
     let msg='Publication failed: '+e.message;
@@ -375,13 +456,21 @@ async function commitPreview(){
     if(e.status>=409)await loadAdmin().catch(()=>{});
   }finally{updateDecisionInfo()}
 }
+function publicationSummaryText(x){
+  let t='new '+x.addedMmsis+', filled '+x.filledFields;
+  if(x.replacedFields)t+=', replaced '+x.replacedFields;
+  if(x.ignoredDifferences!=null)t+=', central kept '+x.ignoredDifferences;
+  if(x.pickedFromReview!=null)t+=', picked '+x.pickedFromReview+', skipped '+x.skippedMmsis;
+  if(x.rejectedRows)t+=', dropped '+x.rejectedRows;
+  return t;
+}
 async function loadPublications(){
   try{
     const data=await adminApi('/api/admin/publications?limit=10');
     const tb=$('publicationList');tb.replaceChildren();
     for(const p of data.publications){
       const tr=document.createElement('tr');const td=t=>{const c=document.createElement('td');c.textContent=t;return c};
-      tr.append(td(p.publicationId),td(p.state),td((p.createdAt||'').replace('T',' ').slice(0,19)),td(p.backupKey||'-'),td(p.summary?('new '+p.summary.addedMmsis+', filled '+p.summary.filledFields+', replaced '+p.summary.replacedFields):(p.lastError||'-')));
+      tr.append(td(p.publicationId),td(p.state),td((p.createdAt||'').replace('T',' ').slice(0,19)),td(p.backupKey||'-'),td(p.summary?publicationSummaryText(p.summary):(p.lastError||'-')));
       tb.appendChild(tr);
     }
   }catch(e){setStatus('publicationStatus','Could not load publications: '+e.message,'err')}
@@ -474,6 +563,11 @@ $('contribNext').addEventListener('click',()=>{if(!contribNextCursor)return;cont
 $('contribPrev').addEventListener('click',()=>{if(contribPageIndex>0){contribPageIndex--;loadContributions()}});
 $('pubPreview').addEventListener('click',createPreview);
 $('pubCommit').addEventListener('click',commitPreview);
+$('reviewFilter').addEventListener('change',renderConflicts);
+$('reviewMajority').addEventListener('click',pickMajority);
+$('reviewReset').addEventListener('click',resetDecisions);
+$('dlIgnored').addEventListener('click',downloadIgnored);
+$('dlRejected').addEventListener('click',downloadRejected);
 $('auditLoad').addEventListener('click',loadAudit);
 $('loadUserTokens').addEventListener('click',loadAdminUsers);
 $('createUserToken').addEventListener('click',createUserToken);
